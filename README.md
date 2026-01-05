@@ -32,6 +32,32 @@ Our approach focuses on simple, interpretable analysis that creates real value f
 
 Key fields include property type, location, price, size, construction year, amenities, and advertisement text.
 
+The dataset should be downloaded separately and placed in `data/raw/` directory.
+
+---
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Register Jupyter kernel
+python -m ipykernel install --user --name=divar_analysis --display-name="Divar Analysis"
+
+# Start JupyterLab
+jupyter lab
+```
+
 ---
 
 ## Phase 1: Data Quality Assessment
@@ -163,6 +189,7 @@ Class imbalance is addressed through appropriate techniques, and the best model 
 ```
 .
 ├── README.md
+├── requirements.txt
 ├── data/
 │   ├── processed/
 │   └── raw/
@@ -200,8 +227,13 @@ Class imbalance is addressed through appropriate techniques, and the best model 
 
 ## Technical Environment
 
+All dependencies are pinned in `requirements.txt` for reproducibility:
+
 - Python 3.x
-- pandas, numpy for data manipulation
-- matplotlib, seaborn for visualization
-- scikit-learn for machine learning
-- hazm for Persian text processing
+- pandas 2.0.3
+- numpy 1.24.3
+- matplotlib 3.7.5
+- seaborn 0.13.2
+- scikit-learn 1.3.2
+- hazm 0.10.0
+- jupyterlab 4.0.12
