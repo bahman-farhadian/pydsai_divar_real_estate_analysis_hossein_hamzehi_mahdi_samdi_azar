@@ -204,4 +204,4 @@ Class imbalance is addressed through appropriate techniques, and the best model 
 - pandas, numpy for data manipulation
 - matplotlib, seaborn for visualization
 - scikit-learn for machine learning
-- hazm for Persian text processing (optional)
+- hazm for Persian text processing
