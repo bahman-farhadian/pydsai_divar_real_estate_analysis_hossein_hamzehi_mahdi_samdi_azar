@@ -36,29 +36,7 @@ The dataset should be downloaded separately and placed in `data/raw/` directory.
 
 ---
 
-## GPU Environment
-
-This project supports GPU acceleration for computationally intensive tasks (clustering, random forest). The following GPU configuration has been tested:
-
-| Component | Version |
-|-----------|---------|
-| GPU | NVIDIA GTX 1080 (8GB VRAM) |
-| CUDA | 11.8 |
-| cuDNN | 8.6 |
-| RAPIDS cuML | 23.12 |
-
-### GPU-Accelerated Operations
-
-- **Phase 4 (Clustering)**: KMeans, PCA, t-SNE via cuML
-- **Phase 5 (Price Prediction)**: RandomForest via cuML
-
-The notebooks automatically detect GPU availability and fall back to CPU (sklearn) if cuML is not installed.
-
----
-
 ## Installation
-
-### Standard Installation (CPU only)
 
 ```bash
 # Clone the repository
@@ -78,44 +56,6 @@ python -m ipykernel install --user --name=divar_analysis --display-name="Divar A
 
 # Start JupyterLab
 jupyter lab
-```
-
-### GPU Installation (Debian/Ubuntu with pip)
-
-```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Upgrade pip
-pip install --upgrade pip
-
-# Install RAPIDS cuML for CUDA 11.8 (requires NVIDIA driver + CUDA toolkit)
-pip install --extra-index-url=https://pypi.nvidia.com cuml-cu11==23.12.*
-
-# Install remaining dependencies
-pip install -r requirements.txt
-
-# Register Jupyter kernel
-python -m ipykernel install --user --name=divar_gpu --display-name="Divar GPU"
-
-# Start JupyterLab
-jupyter lab
-```
-
-**Prerequisites for GPU (Debian/Ubuntu):**
-```bash
-# Install NVIDIA driver (if not already installed)
-sudo apt update
-sudo apt install nvidia-driver-535
-
-# Install CUDA 11.8 toolkit
-wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
-sudo sh cuda_11.8.0_520.61.05_linux.run --toolkit --silent
-
-# Add to PATH (add to ~/.bashrc)
-export PATH=/usr/local/cuda-11.8/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
 ```
 
 ---
@@ -174,9 +114,16 @@ The analysis addresses practical questions these stakeholders face: Which areas 
 
 Preprocessing includes normalization of features, log transformation for skewed variables, and outlier handling. Clustering is performed using K-Means with optimal cluster count determined through Elbow and Silhouette methods.
 
-### GPU Acceleration
+### Two Clustering Approaches
 
-This phase uses RAPIDS cuML for GPU-accelerated KMeans, PCA, and t-SNE when available. Expected speedup: 10-50x compared to CPU.
+The notebook provides two options:
+
+| Approach | Algorithm | Speed | Use Case |
+|----------|-----------|-------|----------|
+| **Fast** | MiniBatchKMeans | Minutes | Presentation, quick iteration |
+| **Full** | Standard KMeans | Hours | Final results, overnight run |
+
+Both approaches produce very similar results. MiniBatchKMeans is recommended for presentations.
 
 ### Dimensionality Reduction
 
@@ -206,11 +153,13 @@ Price per square meter is used as the target variable rather than total price, p
 
 ### Models
 
-Three regression approaches are implemented and compared: Linear Regression as interpretable baseline, tree-based methods (Random Forest) for feature importance analysis, and Gradient Boosting for comparison.
+Three regression approaches are implemented and compared:
 
-### GPU Acceleration
-
-Random Forest uses RAPIDS cuML for GPU acceleration when available. Expected speedup: 5-20x compared to CPU.
+| Model | Type | Purpose |
+|-------|------|---------|
+| Linear Regression | Linear | Interpretable baseline |
+| Random Forest | Tree-based | Feature importance analysis |
+| Gradient Boosting | Ensemble | Performance comparison |
 
 Models are evaluated using R-squared, RMSE, and MAE metrics.
 
@@ -234,7 +183,7 @@ Listings are categorized as over-valued, normal, or under-valued based on predic
 
 ### Part A: Property Type Classification
 
-Using combined title and description text, models are trained to predict property type (cat3_slug). Text preprocessing includes normalization of Persian characters, removal of special characters and noise, and vectorization using both Bag-of-Words (TF-IDF) and embedding approaches.
+Using combined title and description text, models are trained to predict property type (cat3_slug). Text preprocessing includes normalization of Persian characters, removal of special characters and noise, and vectorization using TF-IDF.
 
 Three classification models are compared with evaluation through accuracy, F1-score, and confusion matrix analysis.
 
@@ -295,11 +244,11 @@ Class imbalance is addressed through appropriate techniques, and the best model 
 
 ## Technical Environment
 
-All dependencies are pinned in `requirements.txt` for reproducibility.
+### Dependencies
 
-### Core Dependencies
+All dependencies are pinned in `requirements.txt` for reproducibility:
 
-- Python 3.10
+- Python 3.10+
 - pandas 2.0.3
 - numpy 1.24.3
 - matplotlib 3.7.5
@@ -308,7 +257,8 @@ All dependencies are pinned in `requirements.txt` for reproducibility.
 - hazm 0.10.0
 - jupyterlab 4.0.12
 
-### GPU Dependencies (Optional)
+### Performance Notes
 
-- CUDA 11.8
-- cuML 23.12 (RAPIDS)
+- Phase 4 (Clustering): Use MiniBatchKMeans for fast results, or run Standard KMeans overnight for exact results
+- Phase 5 (Price Prediction): RandomForest uses all CPU cores via n_jobs=-1
+- Phase 6 (Text Classification): TF-IDF vectorization is memory-efficient with sparse matrices

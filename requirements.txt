@@ -28,24 +28,3 @@ python-bidi==0.6.6
 
 # Model persistence
 joblib==1.3.2
-
-# =============================================================================
-# GPU ACCELERATION (Optional - requires NVIDIA GPU with CUDA 11.8)
-# =============================================================================
-# Install via pip on Debian/Ubuntu:
-#   pip install --extra-index-url=https://pypi.nvidia.com cuml-cu11==23.12.*
-#
-# Prerequisites:
-#   - NVIDIA driver 535+
-#   - CUDA 11.8 toolkit
-#
-# Note: cuML provides GPU-accelerated versions of:
-#   - KMeans clustering
-#   - PCA dimensionality reduction
-#   - t-SNE visualization
-#   - Random Forest regression/classification
-#   - Linear Regression
-#
-# The notebooks automatically detect GPU availability and fall back to
-# sklearn (CPU) if cuML is not installed.
-# =============================================================================
