@@ -23,6 +23,7 @@ jupyterlab==4.0.12
 ipykernel==6.29.0
 jupytext==1.16.4
 nbconvert==7.16.4
+mistune==3.0.2
 
 # Persian NLP and text processing
 hazm==0.10.0

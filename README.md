@@ -76,6 +76,12 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+If the environment already exists, refresh the pinned reporting stack before exporting HTML:
+
+```bash
+python -m pip install --force-reinstall -r requirements.txt
+```
+
 Verify CUDA availability:
 
 ```bash
