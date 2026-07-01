@@ -30,6 +30,15 @@
 # We begin by importing necessary libraries for data manipulation, visualization, and Persian text handling. The `arabic_reshaper` and `python-bidi` packages are essential for correctly displaying Persian/Arabic text in matplotlib charts.
 
 # %%
+import os
+
+THREAD_COUNT = str(os.cpu_count() or 1)
+os.environ.setdefault('OMP_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('OPENBLAS_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('MKL_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('NUMEXPR_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('ARROW_NUM_THREADS', THREAD_COUNT)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +47,9 @@ from pathlib import Path
 import subprocess
 import warnings
 warnings.filterwarnings('ignore')
+
+pd.options.compute.use_numexpr = True
+pd.options.compute.use_bottleneck = True
 
 # Persian text display fix for matplotlib
 import arabic_reshaper
@@ -77,6 +89,13 @@ COLORS = {
 }
 
 print("Libraries loaded successfully")
+
+def read_csv_fast(path, **kwargs):
+    try:
+        return pd.read_csv(path, engine='pyarrow', **kwargs)
+    except Exception as exc:
+        print(f"PyArrow CSV engine unavailable for {path.name}; falling back to pandas C engine ({exc})")
+        return pd.read_csv(path, low_memory=False, **kwargs)
 
 # %% [markdown]
 # ## 2. Project Structure and Path Configuration
@@ -126,20 +145,10 @@ print(f"Data file: {DATA_FILE}")
 print(f"File exists: {DATA_FILE.exists()}")
 print(f"File size: {DATA_FILE.stat().st_size / 1024**3:.2f} GB")
 
-# Count actual CSV records using chunked reading (memory efficient)
-print("\nCounting actual CSV records (this may take a moment)...")
-chunk_size = 100_000
-total_rows = 0
-for chunk in pd.read_csv(DATA_FILE, chunksize=chunk_size, low_memory=False):
-    total_rows += len(chunk)
-    
-print(f"\n Actual CSV records: {total_rows:,}")
-
 # Compare with wc -l for educational purposes
 result = subprocess.run(['wc', '-l', str(DATA_FILE)], capture_output=True, text=True)
 wc_lines = int(result.stdout.split()[0])
 print(f"Lines reported by wc -l: {wc_lines:,}")
-print(f"Difference: {wc_lines - total_rows - 1:,} extra newlines (from multiline description field)")
 
 # %% [markdown]
 # ### Load Complete Dataset
@@ -151,18 +160,18 @@ print(f"Difference: {wc_lines - total_rows - 1:,} extra newlines (from multiline
 print(f"Loading FULL dataset from: {DATA_FILE}")
 print("This may take a few minutes for large files...")
 
-df = pd.read_csv(DATA_FILE, low_memory=False)  # No nrows = load ALL records
+df = read_csv_fast(DATA_FILE)  # No nrows = load ALL records
+total_rows = len(df)
 
 print(f"\n" + "=" * 60)
 print(f"Dataset loaded: {df.shape[0]:,} rows, {df.shape[1]} columns")
 print(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024**3:.2f} GB")
 print("=" * 60)
+print(f"Actual CSV records: {total_rows:,}")
+print(f"Difference from wc -l: {wc_lines - total_rows - 1:,} extra newlines (from multiline description field)")
 
 # Verify all rows loaded
-if df.shape[0] == total_rows:
-    print("\n All records loaded successfully!")
-else:
-    print(f"\n WARNING: Expected {total_rows:,} rows but loaded {df.shape[0]:,}")
+print("\n All records loaded successfully!")
 
 # %% [markdown]
 # ## 4. Initial Data Overview

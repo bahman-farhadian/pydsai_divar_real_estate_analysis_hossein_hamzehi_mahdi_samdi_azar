@@ -35,6 +35,15 @@
 # We use the same libraries and configuration as previous phases for consistency.
 
 # %%
+import os
+
+THREAD_COUNT = str(os.cpu_count() or 1)
+os.environ.setdefault('OMP_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('OPENBLAS_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('MKL_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('NUMEXPR_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('ARROW_NUM_THREADS', THREAD_COUNT)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +51,9 @@ import seaborn as sns
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
+
+pd.options.compute.use_numexpr = True
+pd.options.compute.use_bottleneck = True
 
 # Persian text display fix for matplotlib
 import arabic_reshaper
@@ -79,6 +91,13 @@ COLORS = {
 
 print("Libraries loaded successfully")
 
+def read_csv_fast(path, **kwargs):
+    try:
+        return pd.read_csv(path, engine='pyarrow', **kwargs)
+    except Exception as exc:
+        print(f"PyArrow CSV engine unavailable for {path.name}; falling back to pandas C engine ({exc})")
+        return pd.read_csv(path, low_memory=False, **kwargs)
+
 # %% [markdown]
 # ## 2. Project Structure and Path Configuration
 
@@ -113,7 +132,7 @@ print(f"Figures path: {FIGURES_PATH}")
 DATA_FILE = DATA_PROCESSED / 'cleaned_data_with_features.csv'
 
 print(f"Loading data from: {DATA_FILE}")
-df = pd.read_csv(DATA_FILE, low_memory=False)
+df = read_csv_fast(DATA_FILE)
 
 print(f"\nDataset loaded: {len(df):,} rows, {df.shape[1]} columns")
 print(f"\nListings by type:")

@@ -38,6 +38,15 @@
 # ## 1. Setup and Library Imports
 
 # %%
+import os
+
+THREAD_COUNT = str(os.cpu_count() or 1)
+os.environ.setdefault('OMP_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('OPENBLAS_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('MKL_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('NUMEXPR_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('ARROW_NUM_THREADS', THREAD_COUNT)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,6 +55,9 @@ from pathlib import Path
 from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
+
+pd.options.compute.use_numexpr = True
+pd.options.compute.use_bottleneck = True
 
 # Persian text display fix
 import arabic_reshaper
@@ -76,6 +88,13 @@ COLORS = {
 
 print(" Libraries loaded successfully")
 
+def read_csv_fast(path, **kwargs):
+    try:
+        return pd.read_csv(path, engine='pyarrow', **kwargs)
+    except Exception as exc:
+        print(f"PyArrow CSV engine unavailable for {path.name}; falling back to pandas C engine ({exc})")
+        return pd.read_csv(path, low_memory=False, **kwargs)
+
 # %% [markdown]
 # ## 2. Project Structure
 
@@ -102,7 +121,7 @@ print(f"Figures path: {FIGURES_PATH}")
 # %%
 DATA_FILE = DATA_PROCESSED / 'cleaned_data.csv'
 print(f"Loading: {DATA_FILE}")
-df = pd.read_csv(DATA_FILE, low_memory=False)
+df = read_csv_fast(DATA_FILE)
 print(f"\n Dataset: {df.shape[0]:,} rows, {df.shape[1]} columns")
 
 # %%
