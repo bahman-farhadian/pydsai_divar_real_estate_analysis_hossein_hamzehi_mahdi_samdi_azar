@@ -1,8 +1,8 @@
 # %% [markdown]
 # # Phase 3: Market Analysis for Stakeholders
 #
-# **Course**: Data Science and AI - Sharif University  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 # **Dataset**: Divar Real Estate Advertisements (1M records)
 #
 # ---
@@ -11,11 +11,8 @@
 #
 # Deliver actionable insights for buyers and sellers in the Iranian real estate market.
 #
-# > **Instructor's guidance**: "Don't go for very technical format or very high-level complex models. This question doesn't have that capacity. The audience will reject it if you try to show them that way."
 #
-# > "You don't need extensive market study. You need MORE THINKING."
-#
-# ## What This Notebook Covers
+# ## Analysis Scope
 #
 # 1. **Data Loading & Preparation** - Load cleaned data from Phase 2
 # 2. **Market Overview** - Overall market size and city distribution

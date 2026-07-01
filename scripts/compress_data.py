@@ -1,8 +1,8 @@
 """Compress and decompress project CSV files with Zstandard.
 
 The repository tracks `.csv.zst` archives and ignores expanded `.csv` files.
-Compression uses the maximum Zstandard level because it is a one-time packaging
-step, while decompression remains fast for normal project runs.
+Compression uses the maximum configured Zstandard level for compact delivery,
+while decompression remains fast for normal project runs.
 """
 
 from __future__ import annotations

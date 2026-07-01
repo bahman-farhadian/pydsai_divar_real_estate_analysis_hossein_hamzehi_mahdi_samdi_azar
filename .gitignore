@@ -1,64 +1,22 @@
-# Expanded local data files
-Divar-Real-State-Ads/*.csv
-!Divar-Real-State-Ads/*.csv.zst
-!Divar-Real-State-Ads/README.md
+# Expanded dataset files
+Divar-Real-State-Ads/divar_real_estate_ads.csv
+Divar-Real-State-Ads/sampled_data.csv
 
-# Generated analysis outputs
+# Generated pipeline outputs
 data/
 notebooks/outputs/
-reports/html/
-reports/generated/
 
-# Local archives produced outside the tracked dataset directory
-*.zip
-*.tar
-*.tar.gz
-*.tgz
-*.tar.zst
-*.7z
+# Report export intermediates
+reports/html/*.ipynb
+reports/html/.ipynb_checkpoints/
 
-# Python runtime and packaging
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg
-*.egg-info/
-build/
-dist/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-
-# Virtual environments
+# Local Python environment and bytecode
 .venv/
-venv/
-env/
-ENV/
+__pycache__/
+*.pyc
 
-# Jupyter runtime files
-.ipynb_checkpoints/
-
-# Model and experiment byproducts
-*.joblib
-*.pkl
-*.pickle
-*.h5
-*.onnx
-mlruns/
-
-# Logs and temporary files
-*.log
-*.tmp
-*.temp
-tmp/
-temp/
-
-# IDE and OS files
+# Local workspace notes and machine files
+TODO
+.DS_Store
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db

@@ -2,7 +2,7 @@
 
 This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
 
-This repository is intended to be runnable after cloning. The source code is stored as regular Python files in `# %%` cell format, the dataset is stored as highly compressed CSV archives, and the only local rebuild step should be creating the Python virtual environment and decompressing the data files.
+The repository contains a complete, reproducible real estate analysis pipeline for the Divar Real Estate Ads dataset. It includes compressed source data, cell-structured Python analysis files, environment requirements, data compression utilities, and server-friendly reporting instructions.
 
 ## Project Structure
 
@@ -27,52 +27,39 @@ This repository is intended to be runnable after cloning. The source code is sto
     └── 06_text_classification.py
 ```
 
-The repository no longer uses Jupyter Notebook files as source files. The `notebooks/` directory keeps the notebook-style workflow through `# %%` Python cells only.
+The analysis files use `# %%` cells so they can be run end to end from the terminal or interactively in editors that support Python cell execution.
 
-Generated files are intentionally ignored by Git:
+Generated files are ignored by Git:
 
 ```text
 Divar-Real-State-Ads/*.csv
 data/processed/
 notebooks/outputs/
-reports/html/
+reports/html/*.ipynb
 ```
 
-## What The Project Does
+## Runtime Target
 
-The workflow analyzes Divar real estate advertisements from raw CSV data through final modeling and reporting artifacts:
+Target CUDA version: `12.2`
 
-| Step | File | Output |
-| --- | --- | --- |
-| 1 | `01_data_quality.py` | data validation, missing-value reports, cleaned datasets |
-| 2 | `02_eda.py` | exploratory summaries, correlation analysis, engineered features |
-| 3 | `03_market_analysis.py` | market summaries for buyers and sellers |
-| 4 | `04_clustering_MiniBatchKMeans.py` | fast market segmentation |
-| 4 optional | `04_clustering_StandardKMeans.py` | slower full K-Means comparison |
-| 5 | `05_price_prediction.py` | price-per-square-meter models and value labels |
-| 6 | `06_text_classification.py` | listing-text classification and user-type prediction |
+The environment uses CUDA-enabled Python packages where applicable and keeps all project dependencies pinned in `requirements.txt`.
 
-The main dataset used by the workflow is:
+## Dataset
+
+The repository stores the dataset as maximum-compression Zstandard archives:
+
+```text
+Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
+Divar-Real-State-Ads/sampled_data.csv.zst
+```
+
+The main workflow uses:
 
 ```text
 Divar-Real-State-Ads/divar_real_estate_ads.csv
 ```
 
-`sampled_data.csv` is included only as a compressed supporting dataset. The current project workflow does not use it.
-
-## Workstation Target
-
-The full workflow is meant to run on the GPU workstation/server:
-
-```text
-GPU: NVIDIA GeForce GTX 1080, 8 GB VRAM
-Driver: 535.261.03
-CUDA shown by nvidia-smi: 12.2
-CPU: 20 cores
-RAM: 31 GiB
-```
-
-The current analysis code uses pandas and scikit-learn, so most computation is CPU-based. `requirements.txt` includes a CUDA-enabled PyTorch wheel for CUDA validation and future GPU-specific work, but the existing models are the scikit-learn implementations in the Python files.
+`sampled_data.csv` is included as an auxiliary dataset archive and is not required by the main analysis workflow.
 
 ## Setup
 
@@ -89,106 +76,80 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Optional CUDA check:
+Verify CUDA availability:
 
 ```bash
 python - <<'PY'
 import torch
+
 print("CUDA available:", torch.cuda.is_available())
 if torch.cuda.is_available():
-    print("GPU:", torch.cuda.get_device_name(0))
+    print("CUDA device:", torch.cuda.get_device_name(0))
 PY
 ```
 
-## Decompress The Data
+## Decompress Data
 
-The repository stores the CSV files as maximum-compression Zstandard archives:
-
-```text
-Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
-Divar-Real-State-Ads/sampled_data.csv.zst
-```
-
-Before running the analysis, decompress the main dataset:
+Decompress the main dataset before running the analysis:
 
 ```bash
-python scripts/compress_data.py decompress --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst --output Divar-Real-State-Ads/divar_real_estate_ads.csv
+python scripts/compress_data.py decompress \
+  --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst \
+  --output Divar-Real-State-Ads/divar_real_estate_ads.csv
 ```
 
-The sampled file is not required, but it can be restored the same way:
+Decompress the sampled dataset only when needed:
 
 ```bash
-python scripts/compress_data.py decompress --input Divar-Real-State-Ads/sampled_data.csv.zst --output Divar-Real-State-Ads/sampled_data.csv
+python scripts/compress_data.py decompress \
+  --input Divar-Real-State-Ads/sampled_data.csv.zst \
+  --output Divar-Real-State-Ads/sampled_data.csv
 ```
 
-To recompress either CSV at the highest configured level:
+Recreate the compressed archives with maximum Zstandard compression:
 
 ```bash
-python scripts/compress_data.py compress --input Divar-Real-State-Ads/divar_real_estate_ads.csv --output Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
-python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_data.csv --output Divar-Real-State-Ads/sampled_data.csv.zst
+python scripts/compress_data.py compress \
+  --input Divar-Real-State-Ads/divar_real_estate_ads.csv \
+  --output Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
+
+python scripts/compress_data.py compress \
+  --input Divar-Real-State-Ads/sampled_data.csv \
+  --output Divar-Real-State-Ads/sampled_data.csv.zst
 ```
 
-The script uses Zstandard level 22. Compression is slow by design; decompression is fast.
+## Analysis Stages
 
-## Run The Workflow
+| Stage | File | Purpose |
+| --- | --- | --- |
+| Data quality | `01_data_quality.py` | Validate raw records, detect missing values and invalid entries, and export cleaned datasets. |
+| EDA | `02_eda.py` | Build descriptive summaries, engineered features, correlations, and exploratory visualizations. |
+| Market analysis | `03_market_analysis.py` | Produce stakeholder-focused summaries for buyer and seller decisions. |
+| Clustering | `04_clustering_MiniBatchKMeans.py` | Segment listings into interpretable market groups using the fast clustering workflow. |
+| Clustering validation | `04_clustering_StandardKMeans.py` | Run the full K-Means comparison for final cluster validation. |
+| Price prediction | `05_price_prediction.py` | Train price-per-square-meter models and identify over-valued and under-valued listings. |
+| Text classification | `06_text_classification.py` | Classify listing text and infer missing user-type labels. |
 
-Run from inside the `notebooks/` directory because the converted scripts use the current working directory to resolve the project root.
+## Execute And Export Reports
 
-```bash
-cd notebooks
-
-python 01_data_quality.py
-python 02_eda.py
-python 03_market_analysis.py
-python 04_clustering_MiniBatchKMeans.py
-python 05_price_prediction.py
-python 06_text_classification.py
-```
-
-For the slower full clustering comparison:
+Run the analysis on a server without a graphical interface by exporting executed HTML reports. This is the recommended project execution path because it produces both the processed data files and reviewable report files.
 
 ```bash
-python 04_clustering_StandardKMeans.py
-```
-
-Recommended server run:
-
-```bash
-source .venv/bin/activate
-python scripts/compress_data.py decompress --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst --output Divar-Real-State-Ads/divar_real_estate_ads.csv
-cd notebooks
-python 01_data_quality.py
-python 02_eda.py
-python 03_market_analysis.py
-python 04_clustering_MiniBatchKMeans.py
-python 05_price_prediction.py
-python 06_text_classification.py
-```
-
-## Headless HTML Reports
-
-On a server without a GUI, use Jupytext and nbconvert to execute the `# %%` Python files and export HTML notebooks.
-
-Install dependencies from `requirements.txt`, then run:
-
-```bash
+export MPLBACKEND=Agg
 mkdir -p reports/html
-
-jupytext --to ipynb notebooks/01_data_quality.py --output reports/html/01_data_quality.ipynb
-jupyter nbconvert \
-  --to html \
-  --execute reports/html/01_data_quality.ipynb \
-  --output 01_data_quality.html \
-  --output-dir reports/html \
-  --ExecutePreprocessor.cwd=notebooks \
-  --ExecutePreprocessor.timeout=-1
 ```
 
-Repeat for the other Python files, or run this loop from the repository root:
+Export the main deliverable sequence:
 
 ```bash
-mkdir -p reports/html
-for file in notebooks/*.py; do
+for file in \
+  notebooks/01_data_quality.py \
+  notebooks/02_eda.py \
+  notebooks/03_market_analysis.py \
+  notebooks/04_clustering_MiniBatchKMeans.py \
+  notebooks/05_price_prediction.py \
+  notebooks/06_text_classification.py
+do
   name="$(basename "$file" .py)"
   jupytext --to ipynb "$file" --output "reports/html/${name}.ipynb"
   jupyter nbconvert \
@@ -201,21 +162,28 @@ for file in notebooks/*.py; do
 done
 ```
 
-If Persian text or plots render differently on the server, set a non-GUI backend before running:
+Export the full StandardKMeans validation report when required:
 
 ```bash
-export MPLBACKEND=Agg
+file="notebooks/04_clustering_StandardKMeans.py"
+name="$(basename "$file" .py)"
+jupytext --to ipynb "$file" --output "reports/html/${name}.ipynb"
+jupyter nbconvert \
+  --to html \
+  --execute "reports/html/${name}.ipynb" \
+  --output "${name}.html" \
+  --output-dir reports/html \
+  --ExecutePreprocessor.cwd=notebooks \
+  --ExecutePreprocessor.timeout=-1
 ```
 
-The scripts also save figures under:
+The scripts also save high-resolution figures under:
 
 ```text
 notebooks/outputs/figures/
 ```
 
-Bring back `reports/html/`, `data/processed/`, and `notebooks/outputs/` from the workstation when you want to review final results locally.
-
-## Main Outputs
+## Outputs
 
 | Path | Created By |
 | --- | --- |
@@ -228,8 +196,8 @@ Bring back `reports/html/`, `data/processed/`, and `notebooks/outputs/` from the
 | `data/processed/user_type_predictions.csv` | `06_text_classification.py` |
 | `notebooks/outputs/figures/` | analysis scripts |
 | `notebooks/outputs/models/` | modeling scripts |
-| `reports/html/` | headless report export |
+| `reports/html/` | executed HTML reports |
 
 ## License
 
-The project code and documentation are released under the MIT License. The Divar dataset is distributed under its own dataset terms, documented in `Divar-Real-State-Ads/README.md`; those terms are separate from this project's source-code license.
+The project code and documentation are released under the MIT License. Dataset usage is governed separately by the dataset terms documented in `Divar-Real-State-Ads/README.md`.

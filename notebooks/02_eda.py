@@ -1,8 +1,8 @@
 # %% [markdown]
 # # Phase 2: Exploratory Data Analysis (EDA)
 #
-# **Course**: Data Science and AI - Sharif University  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 # **Dataset**: Divar Real Estate Advertisements (1M records, cleaned)
 #
 # ---
@@ -11,9 +11,8 @@
 #
 # Perform comprehensive statistical analysis to understand the data distributions, relationships between variables, and extract meaningful insights for business decision-making.
 #
-# > **Instructor's guidance**: This phase focuses on statistical EDA - distributions, correlations, scatter plots, and notable findings. Keep visualizations simple and interpretable for non-technical stakeholders.
 #
-# ## What This Notebook Covers
+# ## Analysis Scope
 #
 # 1. **Data Loading & Feature Engineering** - Load cleaned data and create analytical features
 # 2. **Univariate Analysis (Numerical)** - Distribution of prices, sizes, and key metrics

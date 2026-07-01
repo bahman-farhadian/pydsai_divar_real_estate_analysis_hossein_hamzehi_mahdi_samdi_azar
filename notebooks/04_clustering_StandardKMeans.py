@@ -1,8 +1,8 @@
 # %% [markdown]
-# # Phase 4: Clustering Analysis (StandardKMeans - Exact) Analysis
+# # Phase 4: Clustering Analysis (StandardKMeans)
 #
-# **Course**: Data Science and AI - Sharif University  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 # **Dataset**: Divar Real Estate Advertisements (1M records)
 #
 # ---
@@ -11,13 +11,8 @@
 #
 # Segment the real estate market into distinct, interpretable categories that provide business value beyond simple statistics.
 #
-# > **Instructor's guidance**: "If you're using features with vastly different scales in mean or variance, this greatly affects clustering. You must normalize if needed."
 #
-# > "Do dimensionality reduction with PCA first, then cluster on principal components, then interpret again. See what differences you find."
-#
-# > "If you use t-SNE, be aware it has stochastic behavior. Each run gives slightly different results. Only make claims about robust patterns that don't change between runs."
-#
-# ## What This Notebook Covers
+# ## Analysis Scope
 #
 # 1. **Data Loading & Feature Selection** - Select relevant features for clustering
 # 2. **Preprocessing** - Handle missing values, outliers, normalization
@@ -35,7 +30,7 @@
 
 # %%
 import os
-# Enable all CPU cores for parallel computation (KMeans uses OpenMP internally)
+# Configure numerical backends for parallel computation
 os.environ['OMP_NUM_THREADS'] = str(os.cpu_count())
 os.environ['OPENBLAS_NUM_THREADS'] = str(os.cpu_count())
 
@@ -90,7 +85,7 @@ print("Libraries loaded successfully")
 # Define project paths
 import os
 
-# Handle both notebook and nbconvert execution
+# Resolve project root for direct and report execution
 if 'NOTEBOOK_PATH' in os.environ:
     PROJECT_ROOT = Path(os.environ['NOTEBOOK_PATH']).parent.parent
 else:

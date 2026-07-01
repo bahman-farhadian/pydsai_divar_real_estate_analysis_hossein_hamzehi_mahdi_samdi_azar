@@ -1,10 +1,8 @@
 # %% [markdown]
 # # Phase 6: Text Classification
 #
-# **Course**: Data Science and AI Introductory Course  
-# **Institution**: School of Data Processing and Analysis Daghigheh  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
-# **Date**: January 2026
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 #
 # ---
 #
@@ -17,13 +15,7 @@
 #
 # ### Key Requirements
 #
-# > "Using combined title and description text, models are trained to predict property type (cat3_slug). Text preprocessing includes normalization of Persian characters, removal of special characters and noise, and vectorization using both Bag-of-Words (TF-IDF) and embedding approaches."
 #
-# > "Three classification models are compared with evaluation through accuracy, F1-score, and confusion matrix analysis."
-#
-# > "This column [user_type] has many NULLs, so labeled data is less. The challenge is harder. You need a stronger model."
-#
-# > "After predicting, check manually - does it make sense? Is the model's prediction reasonable?"
 
 # %% [markdown]
 # ---
@@ -963,7 +955,6 @@ else:
 # %% [markdown]
 # ### 5.3 Manual Validation (CRITICAL)
 #
-# > "After predicting, check manually - does it make sense? Is the model's prediction reasonable?"
 
 # %%
 # Manual validation of predictions

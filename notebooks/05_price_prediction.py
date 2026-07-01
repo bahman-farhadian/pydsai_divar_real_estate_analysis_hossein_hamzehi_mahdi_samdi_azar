@@ -1,8 +1,8 @@
 # %% [markdown]
 # # Phase 5: Price Prediction
 #
-# **Course**: Data Science and AI - Sharif University  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 # **Dataset**: Divar Real Estate Advertisements (1M records)
 #
 # ---
@@ -11,11 +11,8 @@
 #
 # Build price prediction models and identify over-valued and under-valued listings.
 #
-# > **Instructor's guidance**: "Your output variable is probably PRICE PER SQUARE METER. You could use total price, but price per sqm is more logical."
 #
-# > "If you find limitations for your model, report them. Where does it work? Where doesn't it?"
-#
-# ## What This Notebook Covers
+# ## Analysis Scope
 #
 # 1. **Data Loading & Preparation** - Load cleaned data and filter for modeling
 # 2. **Feature Engineering** - Create and encode features for prediction
@@ -1372,7 +1369,6 @@ for i, (_, row) in enumerate(over_valued.iterrows(), 1):
 # %% [markdown]
 # ## 11. Model Limitations Analysis
 #
-# > **Instructor's requirement**: "If you find limitations for your model, report them. Where does it work? Where doesn't it?"
 
 # %%
 print("=" * 60)

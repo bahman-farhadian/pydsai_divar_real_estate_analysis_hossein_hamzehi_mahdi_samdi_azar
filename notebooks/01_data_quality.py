@@ -1,8 +1,8 @@
 # %% [markdown]
 # # Phase 1: Data Quality Assessment
 #
-# **Course**: Data Science and AI - Sharif University  
-# **Team**: Bahman Farhadian, Mahdi Samadi Azar  
+# This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
+#
 # **Dataset**: Divar Real Estate Advertisements (1M records)
 #
 # ---
@@ -11,9 +11,8 @@
 #
 # Identify data recording errors and determine which fields are reliable for analysis.
 #
-# > **Instructor's guidance**: "Where you expect a number around 50-100, do you suddenly see a negative number? A 5-digit number? See if data is reasonable and logical."
 #
-# ## What This Notebook Covers
+# ## Analysis Scope
 #
 # 1. **Data Loading & Verification** - Ensure all records are loaded correctly
 # 2. **Missing Values Analysis** - Identify columns by data availability
@@ -66,7 +65,7 @@ sns.set_style('whitegrid')
 
 print(" Libraries loaded successfully")
 
-# Color palette (consistent with other notebooks)
+# Color palette (consistent with other analysis files)
 COLORS = {
     'primary': '#2ecc71',
     'secondary': '#3498db',
