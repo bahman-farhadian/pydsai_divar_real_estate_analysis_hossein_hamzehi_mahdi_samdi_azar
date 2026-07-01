@@ -23,6 +23,15 @@
 # ## 1. Setup and Library Imports
 
 # %%
+import os
+
+THREAD_COUNT = str(os.cpu_count() or 1)
+os.environ.setdefault('OMP_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('OPENBLAS_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('MKL_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('NUMEXPR_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('ARROW_NUM_THREADS', THREAD_COUNT)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,6 +40,9 @@ from pathlib import Path
 import re
 import warnings
 warnings.filterwarnings('ignore')
+
+pd.options.compute.use_numexpr = True
+pd.options.compute.use_bottleneck = True
 
 # Text processing
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -84,6 +96,13 @@ COLORS = {
 
 print("Libraries loaded successfully")
 
+def read_csv_fast(path, **kwargs):
+    try:
+        return pd.read_csv(path, engine='pyarrow', **kwargs)
+    except Exception as exc:
+        print(f"PyArrow CSV engine unavailable for {path.name}; falling back to pandas C engine ({exc})")
+        return pd.read_csv(path, low_memory=False, **kwargs)
+
 # %%
 # Define project paths
 def find_project_root(start=None):
@@ -120,10 +139,10 @@ RAW_FILE = DATA_RAW / 'divar_real_estate_ads.csv'
 
 if CLEANED_FILE.exists():
     print(f"Loading cleaned data from: {CLEANED_FILE}")
-    df = pd.read_csv(CLEANED_FILE, low_memory=False)
+    df = read_csv_fast(CLEANED_FILE)
 else:
     print(f"Loading raw data from: {RAW_FILE}")
-    df = pd.read_csv(RAW_FILE, low_memory=False)
+    df = read_csv_fast(RAW_FILE)
 
 print(f"\nDataset loaded: {len(df):,} rows, {df.shape[1]} columns")
 print(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024**3:.2f} GB")

@@ -31,6 +31,15 @@
 # ## 1. Setup and Library Imports
 
 # %%
+import os
+
+THREAD_COUNT = str(os.cpu_count() or 1)
+os.environ.setdefault('OMP_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('OPENBLAS_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('MKL_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('NUMEXPR_NUM_THREADS', THREAD_COUNT)
+os.environ.setdefault('ARROW_NUM_THREADS', THREAD_COUNT)
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +47,9 @@ import seaborn as sns
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
+
+pd.options.compute.use_numexpr = True
+pd.options.compute.use_bottleneck = True
 
 # Machine Learning
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -71,6 +83,13 @@ COLORS = {
 
 print("Libraries loaded successfully")
 
+def read_csv_fast(path, **kwargs):
+    try:
+        return pd.read_csv(path, engine='pyarrow', **kwargs)
+    except Exception as exc:
+        print(f"PyArrow CSV engine unavailable for {path.name}; falling back to pandas C engine ({exc})")
+        return pd.read_csv(path, low_memory=False, **kwargs)
+
 # %% [markdown]
 # ## 2. Project Structure and Data Loading
 
@@ -102,7 +121,7 @@ print(f"Models path: {MODELS_PATH}")
 DATA_FILE = DATA_PROCESSED / 'cleaned_data_with_features.csv'
 
 print(f"Loading data from: {DATA_FILE}")
-df_full = pd.read_csv(DATA_FILE, low_memory=False)
+df_full = read_csv_fast(DATA_FILE)
 print(f"\n Full dataset: {len(df_full):,} rows, {len(df_full.columns)} columns")
 
 # %% [markdown]

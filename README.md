@@ -44,7 +44,7 @@ Target CUDA version: `12.2`
 
 The environment uses CUDA-enabled Python packages where applicable and keeps all project dependencies pinned in `requirements.txt`.
 
-CSV loading in the early analysis stages uses the PyArrow engine where available, which can use multiple CPU threads. The clustering implementation uses scikit-learn, so K-Means and MiniBatchKMeans execute on CPU. CUDA execution for clustering requires replacing the scikit-learn clustering implementation with a GPU implementation.
+CSV loading in the analysis stages uses the PyArrow engine where available, which can use multiple CPU threads. The clustering implementation uses scikit-learn, so K-Means and MiniBatchKMeans execute on CPU. CUDA execution for clustering requires replacing the scikit-learn clustering implementation with a GPU implementation.
 
 ## Dataset
 
