@@ -1,15 +1,20 @@
-# Local data and generated artifacts
+# Expanded local data files
+Divar-Real-State-Ads/*.csv
+!Divar-Real-State-Ads/*.csv.zst
+!Divar-Real-State-Ads/README.md
+
+# Generated analysis outputs
 data/
 notebooks/outputs/
+reports/html/
 reports/generated/
 
-# Large compressed exports created outside Git
+# Local archives produced outside the tracked dataset directory
 *.zip
 *.tar
 *.tar.gz
 *.tgz
 *.tar.zst
-*.zst
 *.7z
 
 # Python runtime and packaging
@@ -34,7 +39,7 @@ venv/
 env/
 ENV/
 
-# Jupyter
+# Jupyter runtime files
 .ipynb_checkpoints/
 
 # Model and experiment byproducts

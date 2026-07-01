@@ -90,7 +90,7 @@ print("Libraries loaded successfully")
 # %%
 # Define project paths
 PROJECT_ROOT = Path.cwd().parent
-DATA_RAW = PROJECT_ROOT / 'data' / 'raw'
+DATA_RAW = PROJECT_ROOT / 'Divar-Real-State-Ads'
 DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
 FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
 

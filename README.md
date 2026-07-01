@@ -2,67 +2,67 @@
 
 This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
 
-The repository contains a Python-script version of a Divar real estate analysis workflow. The original notebooks are preserved for review, and each notebook has a matching `# %%`-formatted Python file that can be run in editors such as VS Code, PyCharm, Spyder, or from a terminal.
+This repository is intended to be runnable after cloning. The source code is stored as regular Python files in `# %%` cell format, the dataset is stored as highly compressed CSV archives, and the only local rebuild step should be creating the Python virtual environment and decompressing the data files.
 
-## What This Project Does
-
-The project analyzes real estate advertisements from Divar and turns the raw listing data into data quality reports, market summaries, visualizations, clustering outputs, price prediction results, and text classification outputs.
-
-The workflow is split into these stages:
-
-| Step | File | Purpose |
-| --- | --- | --- |
-| 1 | `notebooks/01_data_quality.py` | Loads the raw CSV, checks missing values and invalid records, removes unusable records, and creates cleaned datasets. |
-| 2 | `notebooks/02_eda.py` | Performs exploratory analysis, adds engineered features, exports summary tables, and writes `cleaned_data_with_features.csv`. |
-| 3 | `notebooks/03_market_analysis.py` | Builds stakeholder-focused market summaries such as city-level prices and amenity impact. |
-| 4a | `notebooks/04_clustering_MiniBatchKMeans.py` | Runs the faster clustering workflow for practical iteration on large data. |
-| 4b | `notebooks/04_clustering_StandardKMeans.py` | Runs the heavier standard K-Means workflow for final clustering comparison. |
-| 5 | `notebooks/05_price_prediction.py` | Trains regression models for price-per-square-meter prediction and exports model artifacts. |
-| 6 | `notebooks/06_text_classification.py` | Classifies listing text and predicts missing user-type labels where possible. |
-
-Generated outputs are written under `data/processed/` and `notebooks/outputs/`. These paths are ignored by Git because the data and model artifacts are large and reproducible.
-
-## Repository Layout
+## Project Structure
 
 ```text
 .
+├── Divar-Real-State-Ads/
+│   ├── README.md
+│   ├── divar_real_estate_ads.csv.zst
+│   └── sampled_data.csv.zst
 ├── LICENSE
 ├── README.md
 ├── requirements.txt
 ├── scripts/
 │   └── compress_data.py
 └── notebooks/
-    ├── 01_data_quality.ipynb
     ├── 01_data_quality.py
-    ├── 02_eda.ipynb
     ├── 02_eda.py
-    ├── 03_market_analysis.ipynb
     ├── 03_market_analysis.py
-    ├── 04_clustering_MiniBatchKMeans.ipynb
     ├── 04_clustering_MiniBatchKMeans.py
-    ├── 04_clustering_StandardKMeans.ipynb
     ├── 04_clustering_StandardKMeans.py
-    ├── 05_price_prediction.ipynb
     ├── 05_price_prediction.py
-    ├── 06_text_classification.ipynb
     └── 06_text_classification.py
 ```
 
-Expected local data layout after pulling the repository:
+The repository no longer uses Jupyter Notebook files as source files. The `notebooks/` directory keeps the notebook-style workflow through `# %%` Python cells only.
+
+Generated files are intentionally ignored by Git:
 
 ```text
-data/
-├── raw/
-│   └── divar_real_estate_ads.csv
-├── processed/
-└── compressed/
+Divar-Real-State-Ads/*.csv
+data/processed/
+notebooks/outputs/
+reports/html/
 ```
 
-The `data/` directory is intentionally not tracked.
+## What The Project Does
 
-## Hardware Target
+The workflow analyzes Divar real estate advertisements from raw CSV data through final modeling and reporting artifacts:
 
-The intended full run target is the NVIDIA workstation:
+| Step | File | Output |
+| --- | --- | --- |
+| 1 | `01_data_quality.py` | data validation, missing-value reports, cleaned datasets |
+| 2 | `02_eda.py` | exploratory summaries, correlation analysis, engineered features |
+| 3 | `03_market_analysis.py` | market summaries for buyers and sellers |
+| 4 | `04_clustering_MiniBatchKMeans.py` | fast market segmentation |
+| 4 optional | `04_clustering_StandardKMeans.py` | slower full K-Means comparison |
+| 5 | `05_price_prediction.py` | price-per-square-meter models and value labels |
+| 6 | `06_text_classification.py` | listing-text classification and user-type prediction |
+
+The main dataset used by the workflow is:
+
+```text
+Divar-Real-State-Ads/divar_real_estate_ads.csv
+```
+
+`sampled_data.csv` is included only as a compressed supporting dataset. The current project workflow does not use it.
+
+## Workstation Target
+
+The full workflow is meant to run on the GPU workstation/server:
 
 ```text
 GPU: NVIDIA GeForce GTX 1080, 8 GB VRAM
@@ -72,11 +72,11 @@ CPU: 20 cores
 RAM: 31 GiB
 ```
 
-Most current project code uses pandas and scikit-learn, so heavy stages still use CPU cores unless a later GPU-specific refactor is added. The environment file is CUDA-ready through the PyTorch CUDA wheel index for the workstation, while the existing scikit-learn models remain the implementation used by these scripts.
+The current analysis code uses pandas and scikit-learn, so most computation is CPU-based. `requirements.txt` includes a CUDA-enabled PyTorch wheel for CUDA validation and future GPU-specific work, but the existing models are the scikit-learn implementations in the Python files.
 
-## Setup On The GPU Workstation
+## Setup
 
-Use Python 3.10 or 3.11 on Linux.
+Use Python 3.10 or 3.11.
 
 ```bash
 git clone git@github.com:bahman-farhadian/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar.git
@@ -100,19 +100,39 @@ if torch.cuda.is_available():
 PY
 ```
 
-## Data Setup
+## Decompress The Data
 
-Place the raw Divar CSV here:
+The repository stores the CSV files as maximum-compression Zstandard archives:
 
 ```text
-data/raw/divar_real_estate_ads.csv
+Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
+Divar-Real-State-Ads/sampled_data.csv.zst
 ```
 
-The scripts expect this exact filename. The raw data is not included in Git because it is large and may have separate redistribution restrictions.
+Before running the analysis, decompress the main dataset:
 
-## Run The Python Workflow
+```bash
+python scripts/compress_data.py decompress --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst --output Divar-Real-State-Ads/divar_real_estate_ads.csv
+```
 
-Run the analysis files from inside the `notebooks/` directory. This matters because several converted scripts calculate the project root from the current working directory.
+The sampled file is not required, but it can be restored the same way:
+
+```bash
+python scripts/compress_data.py decompress --input Divar-Real-State-Ads/sampled_data.csv.zst --output Divar-Real-State-Ads/sampled_data.csv
+```
+
+To recompress either CSV at the highest configured level:
+
+```bash
+python scripts/compress_data.py compress --input Divar-Real-State-Ads/divar_real_estate_ads.csv --output Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
+python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_data.csv --output Divar-Real-State-Ads/sampled_data.csv.zst
+```
+
+The script uses Zstandard level 22. Compression is slow by design; decompression is fast.
+
+## Run The Workflow
+
+Run from inside the `notebooks/` directory because the converted scripts use the current working directory to resolve the project root.
 
 ```bash
 cd notebooks
@@ -125,48 +145,77 @@ python 05_price_prediction.py
 python 06_text_classification.py
 ```
 
-Use the standard K-Means file only when you want the slower full clustering run:
+For the slower full clustering comparison:
 
 ```bash
 python 04_clustering_StandardKMeans.py
 ```
 
-Recommended order for the workstation:
-
-1. Run `01_data_quality.py` first to create `data/processed/cleaned_data.csv`.
-2. Run `02_eda.py` second to create `data/processed/cleaned_data_with_features.csv`.
-3. Run `03_market_analysis.py`, clustering, price prediction, and text classification after the processed files exist.
-4. Prefer `04_clustering_MiniBatchKMeans.py` for normal iteration. Use `04_clustering_StandardKMeans.py` for final validation if time allows.
-
-## Compress The Large Data
-
-The raw data is around hundreds of megabytes, so keep it outside Git and create a compressed copy for transfer or archival.
-
-This repository includes an aggressive CSV-to-Parquet compressor:
+Recommended server run:
 
 ```bash
-python scripts/compress_data.py --input data/raw/divar_real_estate_ads.csv --output data/compressed/divar_real_estate_ads.parquet
+source .venv/bin/activate
+python scripts/compress_data.py decompress --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst --output Divar-Real-State-Ads/divar_real_estate_ads.csv
+cd notebooks
+python 01_data_quality.py
+python 02_eda.py
+python 03_market_analysis.py
+python 04_clustering_MiniBatchKMeans.py
+python 05_price_prediction.py
+python 06_text_classification.py
 ```
 
-The script uses Parquet with Zstandard compression level 19. This is usually much smaller than CSV and remains directly readable by pandas:
+## Headless HTML Reports
 
-```python
-import pandas as pd
+On a server without a GUI, use Jupytext and nbconvert to execute the `# %%` Python files and export HTML notebooks.
 
-df = pd.read_parquet("data/compressed/divar_real_estate_ads.parquet")
-```
-
-For a single archive to move between machines, compress the whole local data directory after generating processed outputs:
+Install dependencies from `requirements.txt`, then run:
 
 ```bash
-tar --zstd -cf divar_data_and_outputs.tar.zst data/
+mkdir -p reports/html
+
+jupytext --to ipynb notebooks/01_data_quality.py --output reports/html/01_data_quality.ipynb
+jupyter nbconvert \
+  --to html \
+  --execute reports/html/01_data_quality.ipynb \
+  --output 01_data_quality.html \
+  --output-dir reports/html \
+  --ExecutePreprocessor.cwd=notebooks \
+  --ExecutePreprocessor.timeout=-1
 ```
 
-Keep the resulting archive outside the repository or in ignored local storage. Do not commit raw, processed, compressed, model, or figure artifacts.
+Repeat for the other Python files, or run this loop from the repository root:
 
-## Outputs
+```bash
+mkdir -p reports/html
+for file in notebooks/*.py; do
+  name="$(basename "$file" .py)"
+  jupytext --to ipynb "$file" --output "reports/html/${name}.ipynb"
+  jupyter nbconvert \
+    --to html \
+    --execute "reports/html/${name}.ipynb" \
+    --output "${name}.html" \
+    --output-dir reports/html \
+    --ExecutePreprocessor.cwd=notebooks \
+    --ExecutePreprocessor.timeout=-1
+done
+```
 
-Important generated files include:
+If Persian text or plots render differently on the server, set a non-GUI backend before running:
+
+```bash
+export MPLBACKEND=Agg
+```
+
+The scripts also save figures under:
+
+```text
+notebooks/outputs/figures/
+```
+
+Bring back `reports/html/`, `data/processed/`, and `notebooks/outputs/` from the workstation when you want to review final results locally.
+
+## Main Outputs
 
 | Path | Created By |
 | --- | --- |
@@ -178,12 +227,9 @@ Important generated files include:
 | `data/processed/price_predictions.csv` | `05_price_prediction.py` |
 | `data/processed/user_type_predictions.csv` | `06_text_classification.py` |
 | `notebooks/outputs/figures/` | analysis scripts |
-| `notebooks/outputs/models/` | model-training scripts |
-
-## Notes For Review
-
-The `.ipynb` files are preserved exactly as review artifacts. The `.py` files are the runnable version of the project and use `# %%` markers so each script can still be explored cell by cell in compatible editors.
+| `notebooks/outputs/models/` | modeling scripts |
+| `reports/html/` | headless report export |
 
 ## License
 
-The source code and documentation are released under the MIT License. The Divar dataset is not part of this license and is not redistributed in this repository.
+The project code and documentation are released under the MIT License. The Divar dataset is distributed under its own dataset terms, documented in `Divar-Real-State-Ads/README.md`; those terms are separate from this project's source-code license.
