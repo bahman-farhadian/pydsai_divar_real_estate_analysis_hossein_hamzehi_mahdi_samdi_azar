@@ -1,24 +1,59 @@
-# Data files (too large for GitHub)
+# Local data and generated artifacts
 data/
+notebooks/outputs/
+reports/generated/
 
-# Virtual environment
-venv/
-env/
-.venv/
+# Large compressed exports created outside Git
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.zst
+*.zst
+*.7z
 
-# Python
+# Python runtime and packaging
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
 *.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
 .ipynb_checkpoints/
 
-# IDE
+# Model and experiment byproducts
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.onnx
+mlruns/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+
+# IDE and OS files
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Outputs (optional - uncomment if you want to exclude)
-# notebooks/outputs/models/

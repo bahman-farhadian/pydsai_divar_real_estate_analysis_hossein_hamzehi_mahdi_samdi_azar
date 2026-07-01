@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Bahman Farhadian
+Copyright (c) 2026 Hossein Hamzehei and Mahdi Samdi Azar
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -11,6 +11,10 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+The dataset used by this course project is not included in the Software and is
+not redistributed by this repository. Dataset access, use, and redistribution
+remain subject to the original data owner's terms and any course rules.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

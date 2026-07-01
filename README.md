@@ -1,264 +1,189 @@
-# Divar Real Estate Market Analysis
+# Divar Real Estate Analysis
 
-**Course**: Data Science and AI Introductory Course  
-**Institution**: School of Data Processing and Analysis Daghigheh  
-**Team**: Bahman Farhadian, Mahdi Samadi Azar  
-**Date**: January 2026
+This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
 
----
+The repository contains a Python-script version of a Divar real estate analysis workflow. The original notebooks are preserved for review, and each notebook has a matching `# %%`-formatted Python file that can be run in editors such as VS Code, PyCharm, Spyder, or from a terminal.
 
-## Project Overview
+## What This Project Does
 
-This project analyzes Iranian real estate market data from Divar platform to extract actionable insights for market stakeholders, specifically buyers and sellers. The analysis spans data quality assessment, exploratory analysis, market segmentation, price modeling, and text classification.
+The project analyzes real estate advertisements from Divar and turns the raw listing data into data quality reports, market summaries, visualizations, clustering outputs, price prediction results, and text classification outputs.
 
-### Guiding Principle
+The workflow is split into these stages:
 
-This project prioritizes practical value over technical complexity. As emphasized in the course:
+| Step | File | Purpose |
+| --- | --- | --- |
+| 1 | `notebooks/01_data_quality.py` | Loads the raw CSV, checks missing values and invalid records, removes unusable records, and creates cleaned datasets. |
+| 2 | `notebooks/02_eda.py` | Performs exploratory analysis, adds engineered features, exports summary tables, and writes `cleaned_data_with_features.csv`. |
+| 3 | `notebooks/03_market_analysis.py` | Builds stakeholder-focused market summaries such as city-level prices and amenity impact. |
+| 4a | `notebooks/04_clustering_MiniBatchKMeans.py` | Runs the faster clustering workflow for practical iteration on large data. |
+| 4b | `notebooks/04_clustering_StandardKMeans.py` | Runs the heavier standard K-Means workflow for final clustering comparison. |
+| 5 | `notebooks/05_price_prediction.py` | Trains regression models for price-per-square-meter prediction and exports model artifacts. |
+| 6 | `notebooks/06_text_classification.py` | Classifies listing text and predicts missing user-type labels where possible. |
 
-> "This question's goal is NOT for you to just write code with correct output. Here you need to frame a problem that is valuable outside this data world."
+Generated outputs are written under `data/processed/` and `notebooks/outputs/`. These paths are ignored by Git because the data and model artifacts are large and reproducible.
 
-> "The stakeholders listed here don't necessarily know data and statistics. Your presentation style, how you communicate information - all of it matters."
+## Repository Layout
 
-Our approach focuses on simple, interpretable analysis that creates real value for non-technical stakeholders.
-
----
-
-## Dataset
-
-**Source**: Divar Real Estate Advertisements  
-**Size**: ~1.6 million listings  
-**Coverage**: Multiple cities across Iran  
-**Time Period**: 2024
-
-Key fields include property type, location, price, size, construction year, amenities, and advertisement text.
-
-The dataset should be downloaded separately and placed in `data/raw/` directory.
-
----
-
-## Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# Register Jupyter kernel
-python -m ipykernel install --user --name=divar_analysis --display-name="Divar Analysis"
-
-# Start JupyterLab
-jupyter lab
-```
-
----
-
-## Phase 1: Data Quality Assessment
-
-**Objective**: Identify data recording errors and determine which fields are reliable for analysis.
-
-> "Where you expect a number around 50-100, do you suddenly see a negative number? A 5-digit number? See if data is reasonable and logical."
-
-This phase examines missing values across all columns, identifies duplicate records, and detects logical inconsistencies such as negative prices, impossible building ages, or floor numbers exceeding total floors. Fields with critical issues are excluded from core analysis or given peripheral roles only.
-
-**Output**: Cleaned dataset with documented exclusions and quality assessment summary.
-
----
-
-## Phase 2: Exploratory Data Analysis
-
-**Objective**: Understand data distributions and relationships to generate hypotheses for market analysis.
-
-This phase covers distribution analysis for numerical variables, summary statistics, correlation analysis between key variables, and identification of notable patterns. The findings from this phase directly inform the stakeholder-focused market analysis.
-
-**Output**: Statistical summaries, correlation insights, and documented hypotheses.
-
----
-
-## Phase 3: Market Analysis for Stakeholders
-
-**Objective**: Deliver actionable insights for buyers and sellers in the Iranian real estate market.
-
-> "Don't go for very technical format or very high-level complex models. This question doesn't have that capacity. The audience will reject it if you try to show them that way."
-
-> "You don't need extensive market study. You need MORE THINKING."
-
-### Target Stakeholders
-
-**Buyers**: Individuals seeking to purchase residential property who need to understand fair pricing, valuable locations, and what features affect price.
-
-**Sellers**: Property owners looking to list their property who need guidance on competitive pricing and understanding what adds value to their listing.
-
-### Analysis Focus
-
-The analysis addresses practical questions these stakeholders face: Which areas offer best value per square meter? How do amenities affect listing prices? What distinguishes different market segments? Where are pricing opportunities?
-
-**Output**: Clear visualizations and recommendations in non-technical language.
-
----
-
-## Phase 4: Clustering Analysis
-
-**Objective**: Segment the real estate market into distinct, interpretable categories.
-
-> "If you're using features with vastly different scales in mean or variance, this greatly affects clustering. You must normalize if needed."
-
-### Methodology
-
-Preprocessing includes normalization of features, log transformation for skewed variables, and outlier handling. Clustering is performed using K-Means with optimal cluster count determined through Elbow and Silhouette methods.
-
-### Two Clustering Approaches
-
-The notebook provides two options:
-
-| Approach | Algorithm | Speed | Use Case |
-|----------|-----------|-------|----------|
-| **Fast** | MiniBatchKMeans | Minutes | Presentation, quick iteration |
-| **Full** | Standard KMeans | Hours | Final results, overnight run |
-
-Both approaches produce very similar results. MiniBatchKMeans is recommended for presentations.
-
-### Dimensionality Reduction
-
-Two approaches are compared: clustering on original features with PCA for visualization, and clustering on principal components with subsequent comparison.
-
-> "Do dimensionality reduction with PCA first, then cluster on principal components, then interpret again. See what differences you find."
-
-> "If you use t-SNE, be aware it has stochastic behavior. Each run gives slightly different results. Only make claims about robust patterns that don't change between runs."
-
-### Interpretation
-
-Each cluster is given a business-meaningful name such as "Budget apartments under 80 sqm", "Luxury new constructions", or "Old properties for renovation". This segmentation provides market understanding beyond simple statistics.
-
-**Output**: Market segments with business interpretations and visual representations.
-
----
-
-## Phase 5: Price Prediction
-
-**Objective**: Build price prediction models and identify over-valued and under-valued listings.
-
-> "Your output variable is probably PRICE PER SQUARE METER. You could use total price, but price per sqm is more logical."
-
-### Target Variable
-
-Price per square meter is used as the target variable rather than total price, providing more meaningful comparisons across different property sizes.
-
-### Models
-
-Three regression approaches are implemented and compared:
-
-| Model | Type | Purpose |
-|-------|------|---------|
-| Linear Regression | Linear | Interpretable baseline |
-| Random Forest | Tree-based | Feature importance analysis |
-| Gradient Boosting | Ensemble | Performance comparison |
-
-Models are evaluated using R-squared, RMSE, and MAE metrics.
-
-### Value Classification
-
-Listings are categorized as over-valued, normal, or under-valued based on prediction residuals:
-
-- **Over-valued**: Priced significantly higher than predicted, representing poor value for buyers
-- **Normal**: Priced as expected given features
-- **Under-valued**: Priced below predicted value, representing potential opportunities
-
-> "If you find limitations for your model, report them. Where does it work? Where doesn't it?"
-
-**Output**: Trained models, performance comparison, and value classification for all listings with documented limitations.
-
----
-
-## Phase 6: Text Classification
-
-**Objective**: Extract structured information from advertisement text.
-
-### Part A: Property Type Classification
-
-Using combined title and description text, models are trained to predict property type (cat3_slug). Text preprocessing includes normalization of Persian characters, removal of special characters and noise, and vectorization using TF-IDF.
-
-Three classification models are compared with evaluation through accuracy, F1-score, and confusion matrix analysis.
-
-### Part B: User Type Classification
-
-This task predicts whether an advertisement was posted by an individual or a real estate agent (user_type). The challenge is harder due to high NULL rate and class imbalance.
-
-> "This column has many NULLs, so labeled data is less. The challenge is harder. You need a stronger model."
-
-Class imbalance is addressed through appropriate techniques, and the best model is used to predict user type for records with missing values.
-
-> "After predicting, check manually - does it make sense? Is the model's prediction reasonable?"
-
-**Output**: Classification models for both tasks, filled NULL values for user_type, and manual validation of predictions.
-
----
-
-## Project Structure
-
-```
+```text
 .
+├── LICENSE
 ├── README.md
 ├── requirements.txt
-├── data/
-│   ├── processed/
-│   └── raw/
-│       ├── README.md
-│       ├── divar_real_estate_ads.csv
-│       └── sampled_data.csv
-├── notebooks/
-│   ├── 01_data_quality.ipynb
-│   ├── 02_eda.ipynb
-│   ├── 03_market_analysis.ipynb
-│   ├── 04_clustering.ipynb
-│   ├── 05_price_prediction.ipynb
-│   ├── 06_text_classification.ipynb
-│   ├── outputs/
-│   │   ├── figures/
-│   │   └── models/
-│   └── src/
-└── reports/
-    ├── report.md
-    └── presentation.pdf
+├── scripts/
+│   └── compress_data.py
+└── notebooks/
+    ├── 01_data_quality.ipynb
+    ├── 01_data_quality.py
+    ├── 02_eda.ipynb
+    ├── 02_eda.py
+    ├── 03_market_analysis.ipynb
+    ├── 03_market_analysis.py
+    ├── 04_clustering_MiniBatchKMeans.ipynb
+    ├── 04_clustering_MiniBatchKMeans.py
+    ├── 04_clustering_StandardKMeans.ipynb
+    ├── 04_clustering_StandardKMeans.py
+    ├── 05_price_prediction.ipynb
+    ├── 05_price_prediction.py
+    ├── 06_text_classification.ipynb
+    └── 06_text_classification.py
 ```
 
----
+Expected local data layout after pulling the repository:
 
-## Deliverables
+```text
+data/
+├── raw/
+│   └── divar_real_estate_ads.csv
+├── processed/
+└── compressed/
+```
 
-| Item | Description |
-|------|-------------|
-| Presentation | Results and findings for stakeholder audience |
-| Written Report | Methodology details and decision rationale |
-| Code | Jupyter notebooks with analysis implementation |
-| Final Package | All materials in ZIP format |
+The `data/` directory is intentionally not tracked.
 
----
+## Hardware Target
 
-## Technical Environment
+The intended full run target is the NVIDIA workstation:
 
-### Dependencies
+```text
+GPU: NVIDIA GeForce GTX 1080, 8 GB VRAM
+Driver: 535.261.03
+CUDA shown by nvidia-smi: 12.2
+CPU: 20 cores
+RAM: 31 GiB
+```
 
-All dependencies are pinned in `requirements.txt` for reproducibility:
+Most current project code uses pandas and scikit-learn, so heavy stages still use CPU cores unless a later GPU-specific refactor is added. The environment file is CUDA-ready through the PyTorch CUDA wheel index for the workstation, while the existing scikit-learn models remain the implementation used by these scripts.
 
-- Python 3.10+
-- pandas 2.0.3
-- numpy 1.24.3
-- matplotlib 3.7.5
-- seaborn 0.13.2
-- scikit-learn 1.3.2
-- hazm 0.10.0
-- jupyterlab 4.0.12
+## Setup On The GPU Workstation
 
-### Performance Notes
+Use Python 3.10 or 3.11 on Linux.
 
-- Phase 4 (Clustering): Use MiniBatchKMeans for fast results, or run Standard KMeans overnight for exact results
-- Phase 5 (Price Prediction): RandomForest uses all CPU cores via n_jobs=-1
-- Phase 6 (Text Classification): TF-IDF vectorization is memory-efficient with sparse matrices
+```bash
+git clone git@github.com:bahman-farhadian/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar.git
+cd pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Optional CUDA check:
+
+```bash
+python - <<'PY'
+import torch
+print("CUDA available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+PY
+```
+
+## Data Setup
+
+Place the raw Divar CSV here:
+
+```text
+data/raw/divar_real_estate_ads.csv
+```
+
+The scripts expect this exact filename. The raw data is not included in Git because it is large and may have separate redistribution restrictions.
+
+## Run The Python Workflow
+
+Run the analysis files from inside the `notebooks/` directory. This matters because several converted scripts calculate the project root from the current working directory.
+
+```bash
+cd notebooks
+
+python 01_data_quality.py
+python 02_eda.py
+python 03_market_analysis.py
+python 04_clustering_MiniBatchKMeans.py
+python 05_price_prediction.py
+python 06_text_classification.py
+```
+
+Use the standard K-Means file only when you want the slower full clustering run:
+
+```bash
+python 04_clustering_StandardKMeans.py
+```
+
+Recommended order for the workstation:
+
+1. Run `01_data_quality.py` first to create `data/processed/cleaned_data.csv`.
+2. Run `02_eda.py` second to create `data/processed/cleaned_data_with_features.csv`.
+3. Run `03_market_analysis.py`, clustering, price prediction, and text classification after the processed files exist.
+4. Prefer `04_clustering_MiniBatchKMeans.py` for normal iteration. Use `04_clustering_StandardKMeans.py` for final validation if time allows.
+
+## Compress The Large Data
+
+The raw data is around hundreds of megabytes, so keep it outside Git and create a compressed copy for transfer or archival.
+
+This repository includes an aggressive CSV-to-Parquet compressor:
+
+```bash
+python scripts/compress_data.py --input data/raw/divar_real_estate_ads.csv --output data/compressed/divar_real_estate_ads.parquet
+```
+
+The script uses Parquet with Zstandard compression level 19. This is usually much smaller than CSV and remains directly readable by pandas:
+
+```python
+import pandas as pd
+
+df = pd.read_parquet("data/compressed/divar_real_estate_ads.parquet")
+```
+
+For a single archive to move between machines, compress the whole local data directory after generating processed outputs:
+
+```bash
+tar --zstd -cf divar_data_and_outputs.tar.zst data/
+```
+
+Keep the resulting archive outside the repository or in ignored local storage. Do not commit raw, processed, compressed, model, or figure artifacts.
+
+## Outputs
+
+Important generated files include:
+
+| Path | Created By |
+| --- | --- |
+| `data/processed/cleaned_data.csv` | `01_data_quality.py` |
+| `data/processed/data_for_price_prediction.csv` | `01_data_quality.py` |
+| `data/processed/cleaned_data_with_features.csv` | `02_eda.py` |
+| `data/processed/market_analysis_city_summary.csv` | `03_market_analysis.py` |
+| `data/processed/clustering_assignments.csv` | clustering scripts |
+| `data/processed/price_predictions.csv` | `05_price_prediction.py` |
+| `data/processed/user_type_predictions.csv` | `06_text_classification.py` |
+| `notebooks/outputs/figures/` | analysis scripts |
+| `notebooks/outputs/models/` | model-training scripts |
+
+## Notes For Review
+
+The `.ipynb` files are preserved exactly as review artifacts. The `.py` files are the runnable version of the project and use `# %%` markers so each script can still be explored cell by cell in compatible editors.
+
+## License
+
+The source code and documentation are released under the MIT License. The Divar dataset is not part of this license and is not redistributed in this repository.
