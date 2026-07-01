@@ -86,7 +86,15 @@ print("Libraries loaded successfully")
 
 # %%
 # Define project paths
-PROJECT_ROOT = Path.cwd().parent
+def find_project_root(start=None):
+    start = (start or Path.cwd()).resolve()
+    for path in (start, *start.parents):
+        if (path / 'Divar-Real-State-Ads').exists() and (path / 'notebooks').exists():
+            return path
+    raise FileNotFoundError("Could not locate project root.")
+
+
+PROJECT_ROOT = find_project_root()
 DATA_RAW = PROJECT_ROOT / 'Divar-Real-State-Ads'
 DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
 FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'

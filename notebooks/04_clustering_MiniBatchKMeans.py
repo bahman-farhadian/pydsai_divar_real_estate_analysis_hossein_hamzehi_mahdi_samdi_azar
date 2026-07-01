@@ -85,18 +85,15 @@ print("Libraries loaded successfully")
 # Define project paths
 import os
 
-# Resolve project root for direct and report execution
-if 'NOTEBOOK_PATH' in os.environ:
-    PROJECT_ROOT = Path(os.environ['NOTEBOOK_PATH']).parent.parent
-else:
-    # Try to find project root
-    cwd = Path.cwd()
-    if cwd.name == 'notebooks':
-        PROJECT_ROOT = cwd.parent
-    elif (cwd / 'notebooks').exists():
-        PROJECT_ROOT = cwd
-    else:
-        PROJECT_ROOT = cwd.parent
+def find_project_root(start=None):
+    start = (start or Path.cwd()).resolve()
+    for path in (start, *start.parents):
+        if (path / 'Divar-Real-State-Ads').exists() and (path / 'notebooks').exists():
+            return path
+    raise FileNotFoundError("Could not locate project root.")
+
+
+PROJECT_ROOT = find_project_root()
 
 DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
 FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
