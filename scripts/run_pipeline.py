@@ -169,7 +169,7 @@ def write_runtime_summary(project_root: Path, rows: list[dict[str, str]]) -> Non
         "log",
     ]
     with summary_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     print(f"Runtime summary: {summary_path}")

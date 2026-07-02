@@ -1,25 +1,28 @@
 # Expanded dataset files generated from committed .zst archives
-Divar-Real-State-Ads/divar_real_estate_ads.csv
-Divar-Real-State-Ads/sampled_data.csv
+/Divar-Real-State-Ads/divar_real_estate_ads.csv
+/Divar-Real-State-Ads/sampled_data.csv
 
 # Legacy generated-output directories; active outputs must use reports/
-data/
-notebooks/outputs/
-reports/notebooks/
+/data/
+/notebooks/outputs/
+/reports/notebooks/
 
-# Generated report artifacts
-reports/data/
-reports/figures/
-reports/models/
-reports/logs/
-reports/runtime_summary.csv
+# Generated data tables and datasets are reproducible from the committed .zst source data.
+/reports/data/
+
+# Heavy model binaries are reproducible from the committed source data and report code.
+reports/models/*.joblib
+reports/models/*.pt
+reports/models/*.pkl
+reports/models/*.pickle
+reports/models/*.onnx
 
 # Notebook artifacts are not part of the finalized repository
 *.ipynb
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
 
-# HTML reports are intentionally not ignored; final reports can be committed.
+# Report artifacts are intentionally tracked except generated data and heavyweight model binaries.
 
 # Local Python environment and bytecode
 .venv/

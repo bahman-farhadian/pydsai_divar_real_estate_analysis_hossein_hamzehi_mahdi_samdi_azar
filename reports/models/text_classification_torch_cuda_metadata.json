@@ -1,0 +1,32 @@
+{
+  "created_at_utc": "2026-07-02T01:28:57.202798+00:00",
+  "text_columns": [
+    "title",
+    "description"
+  ],
+  "metrics": {
+    "cat3_slug": {
+      "task": "cat3_slug",
+      "device": "cuda",
+      "rows_train": 799997,
+      "rows_test": 200000,
+      "vocab_size": 60000,
+      "classes": 16,
+      "accuracy": 0.84083,
+      "macro_f1": 0.7430930906996533,
+      "weighted_f1": 0.8394471194620741
+    },
+    "user_type": {
+      "task": "user_type",
+      "device": "cuda",
+      "rows_train": 231105,
+      "rows_test": 57777,
+      "vocab_size": 60000,
+      "classes": 2,
+      "accuracy": 0.9367914568080724,
+      "macro_f1": 0.8326604345973745,
+      "weighted_f1": 0.9346209657467879
+    }
+  },
+  "model_file": "reports/models/text_classification_torch_cuda.pt"
+}
