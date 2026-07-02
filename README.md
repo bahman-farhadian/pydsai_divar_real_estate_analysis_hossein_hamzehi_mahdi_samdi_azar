@@ -20,9 +20,11 @@ The repository contains a complete, reproducible real estate analysis pipeline f
 └── notebooks/
     ├── 01_data_quality.py
     ├── 02_eda.py
+    ├── 02_eda_polars_duckdb.py
     ├── 03_market_analysis.py
     ├── 04_clustering_MiniBatchKMeans.py
     ├── 04_clustering_StandardKMeans.py
+    ├── 04_clustering_TorchCUDAKMeans.py
     ├── 05_price_prediction.py
     └── 06_text_classification.py
 ```
@@ -44,7 +46,18 @@ Target CUDA version: `12.2`
 
 The environment uses CUDA-enabled Python packages where applicable and keeps all project dependencies pinned in `requirements.txt`.
 
-CSV loading in the analysis stages uses the PyArrow engine where available, which can use multiple CPU threads. The clustering implementation uses scikit-learn, so K-Means and MiniBatchKMeans execute on CPU. CUDA execution for clustering requires replacing the scikit-learn clustering implementation with a GPU implementation.
+The baseline analysis files use pandas and scikit-learn. CSV loading uses the PyArrow engine where available, and the pipeline writes Parquet intermediates so later stages can avoid repeatedly parsing large CSV files.
+
+The optimized alternatives are included as separate deliverables:
+
+```text
+notebooks/02_eda_polars_duckdb.py
+notebooks/04_clustering_TorchCUDAKMeans.py
+```
+
+`02_eda_polars_duckdb.py` demonstrates a parallel Polars/DuckDB implementation for data engineering and aggregation. `04_clustering_TorchCUDAKMeans.py` uses PyTorch CUDA for K-Means on CUDA-capable NVIDIA GPUs and falls back to CPU if CUDA is unavailable.
+
+Modern RAPIDS/cuML is not pinned as a dependency for this workstation target because current RAPIDS releases require newer GPU architecture than Pascal/GTX 1080. The CUDA path in this repository is therefore implemented with PyTorch CUDA, which supports the selected environment.
 
 ## Dataset
 
@@ -117,9 +130,11 @@ python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_da
 | --- | --- | --- |
 | Data quality | `01_data_quality.py` | Validate raw records, detect missing values and invalid entries, and export cleaned datasets. |
 | EDA | `02_eda.py` | Build descriptive summaries, engineered features, correlations, and exploratory visualizations. |
+| Optimized EDA | `02_eda_polars_duckdb.py` | Run a parallel Polars/DuckDB alternative and export Parquet/CSV summary artifacts. |
 | Market analysis | `03_market_analysis.py` | Produce stakeholder-focused summaries for buyer and seller decisions. |
 | Clustering | `04_clustering_MiniBatchKMeans.py` | Segment listings into interpretable market groups using the fast clustering workflow. |
 | Clustering validation | `04_clustering_StandardKMeans.py` | Run the full K-Means comparison for final cluster validation. |
+| CUDA clustering | `04_clustering_TorchCUDAKMeans.py` | Run optional PyTorch CUDA K-Means for GPU-backed clustering. |
 | Price prediction | `05_price_prediction.py` | Train price-per-square-meter models and identify over-valued and under-valued listings. |
 | Text classification | `06_text_classification.py` | Classify listing text and infer missing user-type labels. |
 
@@ -149,6 +164,13 @@ Export the full StandardKMeans validation report when required:
 python scripts/export_html.py --input notebooks/04_clustering_StandardKMeans.py --output reports/html/04_clustering_StandardKMeans.html
 ```
 
+Export the optimized portfolio variants when required:
+
+```bash
+python scripts/export_html.py --input notebooks/02_eda_polars_duckdb.py --output reports/html/02_eda_polars_duckdb.html
+python scripts/export_html.py --input notebooks/04_clustering_TorchCUDAKMeans.py --output reports/html/04_clustering_TorchCUDAKMeans.html
+```
+
 The scripts also save high-resolution figures under:
 
 ```text
@@ -160,10 +182,19 @@ notebooks/outputs/figures/
 | Path | Created By |
 | --- | --- |
 | `data/processed/cleaned_data.csv` | `01_data_quality.py` |
+| `data/processed/cleaned_data.parquet` | `01_data_quality.py` |
 | `data/processed/data_for_price_prediction.csv` | `01_data_quality.py` |
+| `data/processed/data_for_price_prediction.parquet` | `01_data_quality.py` |
 | `data/processed/cleaned_data_with_features.csv` | `02_eda.py` |
+| `data/processed/cleaned_data_with_features.parquet` | `02_eda.py` |
+| `data/processed/cleaned_data_with_features_polars.parquet` | `02_eda_polars_duckdb.py` |
+| `data/processed/eda_city_statistics_duckdb.csv` | `02_eda_polars_duckdb.py` |
+| `data/processed/eda_listing_summary_duckdb.csv` | `02_eda_polars_duckdb.py` |
 | `data/processed/market_analysis_city_summary.csv` | `03_market_analysis.py` |
 | `data/processed/clustering_assignments.csv` | clustering scripts |
+| `data/processed/clustering_assignments_torch_cuda.csv` | `04_clustering_TorchCUDAKMeans.py` |
+| `data/processed/clustering_assignments_torch_cuda.parquet` | `04_clustering_TorchCUDAKMeans.py` |
+| `data/processed/cluster_profiles_torch_cuda.csv` | `04_clustering_TorchCUDAKMeans.py` |
 | `data/processed/price_predictions.csv` | `05_price_prediction.py` |
 | `data/processed/user_type_predictions.csv` | `06_text_classification.py` |
 | `notebooks/outputs/figures/` | analysis scripts |

@@ -86,6 +86,10 @@ CLUSTER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#e67e22',
 print("Libraries loaded successfully")
 
 def read_csv_fast(path, **kwargs):
+    parquet_path = path.with_suffix('.parquet')
+    if parquet_path.exists():
+        print(f"Loading Parquet: {parquet_path}")
+        return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
     except Exception as exc:

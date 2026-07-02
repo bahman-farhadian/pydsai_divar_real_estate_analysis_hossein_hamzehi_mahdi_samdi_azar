@@ -91,6 +91,10 @@ COLORS = {
 print("Libraries loaded successfully")
 
 def read_csv_fast(path, **kwargs):
+    parquet_path = path.with_suffix('.parquet')
+    if parquet_path.exists():
+        print(f"Loading Parquet: {parquet_path}")
+        return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
     except Exception as exc:
@@ -1432,8 +1436,10 @@ print("\nStep 7 - Export cleaned datasets:")
 print("\nSaving cleaned_data.csv (this may take a few minutes)...")
 
 df_cleaned.to_csv(DATA_PROCESSED / 'cleaned_data.csv', index=False)
+df_cleaned.to_parquet(DATA_PROCESSED / 'cleaned_data.parquet', index=False, compression='zstd')
 file_size = (DATA_PROCESSED / 'cleaned_data.csv').stat().st_size / 1024**3
 print(f" Saved: {DATA_PROCESSED / 'cleaned_data.csv'}")
+print(f" Saved: {DATA_PROCESSED / 'cleaned_data.parquet'}")
 print(f"  Size: {file_size:.2f} GB")
 print(f"  Rows: {len(df_cleaned):,}")
 
@@ -1454,7 +1460,9 @@ print(f"    - Not a price outlier")
 print(f"  Rows: {len(df_for_price_prediction):,} ({len(df_for_price_prediction)/len(df_cleaned)*100:.1f}% of cleaned data)")
 
 df_for_price_prediction.to_csv(DATA_PROCESSED / 'data_for_price_prediction.csv', index=False)
+df_for_price_prediction.to_parquet(DATA_PROCESSED / 'data_for_price_prediction.parquet', index=False, compression='zstd')
 print(f" Saved: {DATA_PROCESSED / 'data_for_price_prediction.csv'}")
+print(f" Saved: {DATA_PROCESSED / 'data_for_price_prediction.parquet'}")
 
 # %%
 # Create subset for rental analysis
@@ -1466,7 +1474,9 @@ print(f"\n Rental Analysis Dataset:")
 print(f"  Rows: {len(df_rentals):,} ({len(df_rentals)/len(df_cleaned)*100:.1f}% of cleaned data)")
 
 df_rentals.to_csv(DATA_PROCESSED / 'data_rentals.csv', index=False)
+df_rentals.to_parquet(DATA_PROCESSED / 'data_rentals.parquet', index=False, compression='zstd')
 print(f" Saved: {DATA_PROCESSED / 'data_rentals.csv'}")
+print(f" Saved: {DATA_PROCESSED / 'data_rentals.parquet'}")
 
 # %% [markdown]
 # ---

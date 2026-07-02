@@ -89,6 +89,10 @@ COLORS = {
 print(" Libraries loaded successfully")
 
 def read_csv_fast(path, **kwargs):
+    parquet_path = path.with_suffix('.parquet')
+    if parquet_path.exists():
+        print(f"Loading Parquet: {parquet_path}")
+        return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
     except Exception as exc:
@@ -1287,8 +1291,10 @@ for col in new_cols:
         print(f"  - {col}: {df[col].notna().sum():,} non-null")
 
 df.to_csv(DATA_PROCESSED / 'cleaned_data_with_features.csv', index=False)
+df.to_parquet(DATA_PROCESSED / 'cleaned_data_with_features.parquet', index=False, compression='zstd')
 size = (DATA_PROCESSED / 'cleaned_data_with_features.csv').stat().st_size / 1024**3
 print(f"\n Saved: cleaned_data_with_features.csv ({size:.2f} GB)")
+print(f" Saved: cleaned_data_with_features.parquet")
 
 # %% [markdown]
 # ---
