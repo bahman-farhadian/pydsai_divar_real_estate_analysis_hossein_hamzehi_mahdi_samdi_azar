@@ -177,7 +177,6 @@ def write_runtime_summary(project_root: Path, rows: list[dict[str, str]]) -> Non
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Divar analysis report pipeline.")
-    parser.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) // 2))
     parser.add_argument("--timeout", type=int, default=-1)
     args = parser.parse_args()
 
@@ -268,7 +267,7 @@ def main() -> None:
         )
     )
 
-    all_results = run_stages(project_root, stages, jobs=args.jobs, timeout=args.timeout)
+    all_results = run_stages(project_root, stages, jobs=max(1, os.cpu_count() or 1), timeout=args.timeout)
     write_runtime_summary(project_root, all_results)
 
 

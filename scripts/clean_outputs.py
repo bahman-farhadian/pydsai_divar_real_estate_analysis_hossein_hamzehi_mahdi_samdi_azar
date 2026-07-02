@@ -31,24 +31,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Clean generated report outputs.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--include-expanded-csv", action="store_true")
-    parser.add_argument(
-        "--include-legacy",
-        action="store_true",
-        help="Also remove old generated-output directories from pre-final layouts.",
-    )
     args = parser.parse_args()
 
     project_root = find_project_root(Path.cwd())
     targets = [
         project_root / "reports",
     ]
-    if args.include_legacy:
-        targets.extend(
-            [
-                project_root / "data",
-                project_root / "notebooks" / "outputs",
-            ]
-        )
     if args.include_expanded_csv:
         targets.extend(
             [

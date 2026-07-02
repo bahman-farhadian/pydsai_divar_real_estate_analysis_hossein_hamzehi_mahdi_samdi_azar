@@ -2,15 +2,15 @@
 /Divar-Real-State-Ads/divar_real_estate_ads.csv
 /Divar-Real-State-Ads/sampled_data.csv
 
-# Legacy generated-output directories; active outputs must use reports/
+# Non-report output locations are not part of the final project layout.
 /data/
 /notebooks/outputs/
 /reports/notebooks/
 
-# Generated data tables and datasets are reproducible from the committed .zst source data.
+# Generated data tables and datasets are recreated by `make run`.
 /reports/data/
 
-# Heavy model binaries are reproducible from the committed source data and report code.
+# Trained model binaries are recreated by `make run`.
 reports/models/*.joblib
 reports/models/*.pt
 reports/models/*.pkl
