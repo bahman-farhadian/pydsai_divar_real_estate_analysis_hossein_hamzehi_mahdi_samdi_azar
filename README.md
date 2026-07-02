@@ -195,6 +195,7 @@ notebooks/outputs/figures/
 | `data/processed/clustering_assignments_torch_cuda.csv` | `04_clustering_TorchCUDAKMeans.py` |
 | `data/processed/clustering_assignments_torch_cuda.parquet` | `04_clustering_TorchCUDAKMeans.py` |
 | `data/processed/cluster_profiles_torch_cuda.csv` | `04_clustering_TorchCUDAKMeans.py` |
+| `data/processed/clustering_summary_torch_cuda.csv` | `04_clustering_TorchCUDAKMeans.py` |
 | `data/processed/price_predictions.csv` | `05_price_prediction.py` |
 | `data/processed/user_type_predictions.csv` | `06_text_classification.py` |
 | `notebooks/outputs/figures/` | analysis scripts |
