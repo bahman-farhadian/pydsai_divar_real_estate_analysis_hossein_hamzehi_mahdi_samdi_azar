@@ -1,18 +1,22 @@
-# Expanded dataset files
+# Expanded dataset files generated from committed .zst archives
 Divar-Real-State-Ads/divar_real_estate_ads.csv
 Divar-Real-State-Ads/sampled_data.csv
 
-# Generated pipeline outputs
+# Generated pipeline outputs and model artifacts
 data/
 notebooks/outputs/
 
-# Report export intermediates
-reports/html/*.ipynb
-reports/html/.ipynb_checkpoints/
+# Notebook artifacts are not part of the finalized repository
+*.ipynb
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# HTML reports are intentionally not ignored; final reports can be committed.
 
 # Local Python environment and bytecode
 .venv/
 __pycache__/
+**/__pycache__/
 *.pyc
 
 # Local workspace notes and machine files
