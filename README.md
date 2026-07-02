@@ -84,7 +84,7 @@ Divar-Real-State-Ads/divar_real_estate_ads.csv
 
 ## Setup
 
-Use Python 3.10 or 3.11. The Makefile is the primary command surface for setup, data extraction, execution, export, and cleanup.
+Use Python 3.10 or 3.11. The Makefile is the primary command surface for setup, data extraction, execution, and cleanup.
 
 ```bash
 git clone git@github.com:bahman-farhadian/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar.git
@@ -102,12 +102,6 @@ Validate the runtime:
 
 ```bash
 make check
-```
-
-Verify CUDA directly:
-
-```bash
-.venv/bin/python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'none')"
 ```
 
 ## Data Preparation
@@ -163,18 +157,6 @@ Run the complete dependency-aware pipeline:
 make run JOBS=4
 ```
 
-Run the complete pipeline plus full StandardKMeans validation:
-
-```bash
-make run-standard JOBS=4
-```
-
-Run without CUDA alternatives:
-
-```bash
-make run-cpu JOBS=4
-```
-
 The runner writes:
 
 ```text
@@ -192,50 +174,6 @@ Copy the complete report bundle from a headless server with:
 
 ```bash
 scp -r reports/ USER@HOST:~
-```
-
-## Individual Report Execution
-
-Each report can also be exported directly through the Makefile:
-
-```bash
-make export INPUT=notebooks/01_data_quality.py OUTPUT=reports/html/01_data_quality.html
-```
-
-```bash
-make export INPUT=notebooks/02_eda.py OUTPUT=reports/html/02_eda.html
-```
-
-```bash
-make export INPUT=notebooks/02_eda_polars_duckdb.py OUTPUT=reports/html/02_eda_polars_duckdb.html
-```
-
-```bash
-make export INPUT=notebooks/03_market_analysis.py OUTPUT=reports/html/03_market_analysis.html
-```
-
-```bash
-make export INPUT=notebooks/04_clustering_MiniBatchKMeans.py OUTPUT=reports/html/04_clustering_MiniBatchKMeans.html
-```
-
-```bash
-make export INPUT=notebooks/04_clustering_TorchCUDAKMeans.py OUTPUT=reports/html/04_clustering_TorchCUDAKMeans.html
-```
-
-```bash
-make export INPUT=notebooks/05_price_prediction.py OUTPUT=reports/html/05_price_prediction.html
-```
-
-```bash
-make export INPUT=notebooks/05_price_prediction_TorchCUDA.py OUTPUT=reports/html/05_price_prediction_TorchCUDA.html
-```
-
-```bash
-make export INPUT=notebooks/06_text_classification.py OUTPUT=reports/html/06_text_classification.html
-```
-
-```bash
-make export INPUT=notebooks/06_text_classification_TorchCUDA.py OUTPUT=reports/html/06_text_classification_TorchCUDA.html
 ```
 
 ## Analysis Stages

@@ -5,7 +5,7 @@ JOBS ?= 4
 VPYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
-.PHONY: help venv install setup check extract-data extract-sample compress-data compress-sample run run-standard run-cpu export clean-dry clean clean-legacy clean-all
+.PHONY: help venv install setup check extract-data extract-sample compress-data compress-sample run clean-dry clean clean-legacy clean-all
 
 help: ## Show available project commands.
 	@awk 'BEGIN {FS = ":.*##"; printf "Available commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -34,19 +34,8 @@ compress-data: ## Recreate the compressed main dataset archive.
 compress-sample: ## Recreate the compressed development sample archive.
 	$(VPYTHON) scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_data.csv --output Divar-Real-State-Ads/sampled_data.csv.zst
 
-run: ## Run the dependency-aware pipeline with CUDA stages when CUDA is available.
+run: ## Run the complete dependency-aware pipeline and write all reports under reports/.
 	$(VPYTHON) scripts/run_pipeline.py --jobs $(JOBS)
-
-run-standard: ## Run the full pipeline including StandardKMeans validation.
-	$(VPYTHON) scripts/run_pipeline.py --jobs $(JOBS) --include-standard-kmeans
-
-run-cpu: ## Run the pipeline without CUDA alternatives.
-	$(VPYTHON) scripts/run_pipeline.py --jobs $(JOBS) --skip-cuda
-
-export: ## Export one report. Usage: make export INPUT=notebooks/01_data_quality.py OUTPUT=reports/html/01_data_quality.html
-	@test -n "$(INPUT)" || (echo "INPUT is required"; exit 1)
-	@test -n "$(OUTPUT)" || (echo "OUTPUT is required"; exit 1)
-	$(VPYTHON) scripts/export_html.py --input $(INPUT) --output $(OUTPUT)
 
 clean-dry: ## Preview generated report cleanup.
 	$(PYTHON) scripts/clean_outputs.py --dry-run

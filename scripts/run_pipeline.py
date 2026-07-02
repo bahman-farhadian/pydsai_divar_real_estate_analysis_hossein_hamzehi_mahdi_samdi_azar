@@ -179,8 +179,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Divar analysis report pipeline.")
     parser.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) // 2))
     parser.add_argument("--timeout", type=int, default=-1)
-    parser.add_argument("--include-standard-kmeans", action="store_true")
-    parser.add_argument("--skip-cuda", action="store_true")
     args = parser.parse_args()
 
     project_root = find_project_root(Path.cwd())
@@ -189,7 +187,7 @@ def main() -> None:
     (project_root / "reports" / "figures").mkdir(parents=True, exist_ok=True)
     (project_root / "reports" / "models").mkdir(parents=True, exist_ok=True)
 
-    use_cuda = gpu_available() and not args.skip_cuda
+    use_cuda = gpu_available()
 
     stages = [
         Stage("01_data_quality", Path("notebooks/01_data_quality.py"), Path("reports/html/01_data_quality.html"), "cpu"),
@@ -260,16 +258,15 @@ def main() -> None:
             ]
         )
 
-    if args.include_standard_kmeans:
-        stages.append(
-            Stage(
-                "04_clustering_StandardKMeans",
-                Path("notebooks/04_clustering_StandardKMeans.py"),
-                Path("reports/html/04_clustering_StandardKMeans.html"),
-                "cpu",
-                ("02_eda",),
-            )
+    stages.append(
+        Stage(
+            "04_clustering_StandardKMeans",
+            Path("notebooks/04_clustering_StandardKMeans.py"),
+            Path("reports/html/04_clustering_StandardKMeans.html"),
+            "cpu",
+            ("02_eda",),
         )
+    )
 
     all_results = run_stages(project_root, stages, jobs=args.jobs, timeout=args.timeout)
     write_runtime_summary(project_root, all_results)
