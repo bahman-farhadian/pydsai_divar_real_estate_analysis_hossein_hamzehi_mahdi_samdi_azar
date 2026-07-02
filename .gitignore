@@ -7,22 +7,16 @@
 /notebooks/outputs/
 /reports/notebooks/
 
-# Generated data tables and datasets are recreated by `make run`.
+# Generated data tables, datasets, and model artifacts are recreated by `make run`.
 /reports/data/
-
-# Trained model binaries are recreated by `make run`.
-reports/models/*.joblib
-reports/models/*.pt
-reports/models/*.pkl
-reports/models/*.pickle
-reports/models/*.onnx
+/reports/models/
 
 # Notebook artifacts are not part of the finalized repository
 *.ipynb
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
 
-# Report artifacts are intentionally tracked except generated data and heavyweight model binaries.
+# Report artifacts are intentionally tracked except generated data and model artifacts.
 
 # Local Python environment and bytecode
 .venv/

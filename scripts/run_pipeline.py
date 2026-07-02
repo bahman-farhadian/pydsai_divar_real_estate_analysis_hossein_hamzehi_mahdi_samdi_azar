@@ -101,12 +101,23 @@ def run_stage(project_root: Path, stage: Stage, timeout: int) -> dict[str, str]:
     }
 
 
-def run_stages(project_root: Path, stages: list[Stage], jobs: int, timeout: int) -> list[dict[str, str]]:
+def stage_resource(stage: Stage) -> str:
+    return "cuda" if stage.runtime == "cuda" else "cpu"
+
+
+def run_stages(
+    project_root: Path,
+    stages: list[Stage],
+    cpu_jobs: int,
+    cuda_jobs: int,
+    timeout: int,
+) -> list[dict[str, str]]:
     results: list[dict[str, str]] = []
     if not stages:
         return results
 
-    jobs = max(1, jobs)
+    limits = {"cpu": max(1, cpu_jobs), "cuda": max(0, cuda_jobs)}
+    active = {"cpu": 0, "cuda": 0}
     stage_map = {stage.name: stage for stage in stages}
     unknown_dependencies = sorted(
         {
@@ -123,17 +134,21 @@ def run_stages(project_root: Path, stages: list[Stage], jobs: int, timeout: int)
     completed: set[str] = set()
     running = {}
 
-    with ThreadPoolExecutor(max_workers=max(1, min(jobs, len(stages)))) as executor:
+    max_workers = max(1, min(sum(limits.values()), len(stages)))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         while pending or running:
             ready = [
                 stage
                 for stage in pending.values()
                 if all(dependency in completed for dependency in stage.depends_on)
             ]
-            free_slots = max(0, jobs - len(running))
-            for stage in ready[:free_slots]:
+            for stage in ready:
+                resource = stage_resource(stage)
+                if active[resource] >= limits[resource]:
+                    continue
                 future = executor.submit(run_stage, project_root, stage, timeout)
                 running[future] = stage
+                active[resource] += 1
                 del pending[stage.name]
 
             if not running:
@@ -142,6 +157,7 @@ def run_stages(project_root: Path, stages: list[Stage], jobs: int, timeout: int)
 
             for future in as_completed(running):
                 stage = running.pop(future)
+                active[stage_resource(stage)] -= 1
                 break
 
             result = future.result()
@@ -267,7 +283,13 @@ def main() -> None:
         )
     )
 
-    all_results = run_stages(project_root, stages, jobs=max(1, os.cpu_count() or 1), timeout=args.timeout)
+    all_results = run_stages(
+        project_root,
+        stages,
+        cpu_jobs=max(1, os.cpu_count() or 1),
+        cuda_jobs=1 if use_cuda else 0,
+        timeout=args.timeout,
+    )
     write_runtime_summary(project_root, all_results)
 
 
