@@ -19,7 +19,7 @@
 # 3. **Optimal K Selection** - Elbow and Silhouette methods
 # 4. **Approach 1: Cluster Original Features** - K-Means with PCA visualization
 # 5. **Approach 2: Cluster PCA Components** - Compare with Approach 1
-# 6. **t-SNE Visualization** - Multiple runs to verify robust patterns
+# 6. **CUDA Projection Visualization** - Multiple runs to verify broad visual patterns
 # 7. **Cluster Interpretation** - Assign business-meaningful names
 # 8. **Results & Export** - Save cluster assignments and profiles
 #
@@ -52,9 +52,6 @@ pd.options.compute.use_bottleneck = True
 # Clustering and preprocessing
 from sklearn.preprocessing import StandardScaler
 import torch
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
-from sklearn.metrics import silhouette_score, silhouette_samples
 
 # Display settings
 pd.set_option('display.max_columns', None)
@@ -100,7 +97,7 @@ def read_csv_fast(path, **kwargs):
 class TorchKMeans:
     """Small K-Means estimator with a scikit-learn-like interface and CUDA support."""
 
-    def __init__(self, n_clusters, random_state=42, n_init=3, batch_size=65536, max_iter=100, tol=1e-4):
+    def __init__(self, n_clusters, random_state=42, n_init=3, batch_size=262144, max_iter=100, tol=1e-4):
         self.n_clusters = n_clusters
         self.random_state = random_state
         self.n_init = n_init
@@ -117,10 +114,15 @@ class TorchKMeans:
         inertia = 0.0
         for start in range(0, x.shape[0], self.batch_size):
             end = min(start + self.batch_size, x.shape[0])
-            distances = torch.cdist(x[start:end], centers)
+            batch = x[start:end]
+            distances = (
+                batch.pow(2).sum(dim=1, keepdim=True)
+                + centers.pow(2).sum(dim=1).unsqueeze(0)
+                - 2 * batch @ centers.T
+            ).clamp_min_(0)
             min_distances, batch_labels = distances.min(dim=1)
             labels[start:end] = batch_labels
-            inertia += min_distances.pow(2).sum().item()
+            inertia += min_distances.sum().item()
         return labels, inertia
 
     def _single_fit(self, x, seed):
@@ -131,13 +133,15 @@ class TorchKMeans:
 
         for iteration in range(self.max_iter):
             labels, inertia = self._assign_labels(x, centers)
-            new_centers = torch.empty_like(centers)
+            raw_counts = torch.bincount(labels, minlength=self.n_clusters)
+            new_centers = torch.zeros_like(centers)
+            new_centers.scatter_add_(0, labels[:, None].expand(-1, x.shape[1]), x)
+            counts = raw_counts.clamp_min(1).to(x.dtype)
+            new_centers = new_centers / counts[:, None]
 
-            for cluster_id in range(self.n_clusters):
-                mask = labels == cluster_id
-                if mask.any():
-                    new_centers[cluster_id] = x[mask].mean(dim=0)
-                else:
+            empty_clusters = torch.where(raw_counts == 0)[0]
+            for cluster_id in empty_clusters.tolist():
+                if not (labels == cluster_id).any():
                     replacement = torch.randint(0, x.shape[0], (1,), generator=generator, device=x.device)
                     new_centers[cluster_id] = x[replacement.item()]
 
@@ -182,6 +186,77 @@ class TorchKMeans:
         centers = torch.from_numpy(self.cluster_centers_.astype(np.float32)).to(self.device)
         labels, _ = self._assign_labels(x, centers)
         return labels.detach().cpu().numpy()
+
+
+def get_torch_device():
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def torch_pca_transform(X, n_components):
+    device = get_torch_device()
+    x = torch.as_tensor(np.asarray(X, dtype=np.float32), device=device)
+    mean = x.mean(dim=0, keepdim=True)
+    centered = x - mean
+    covariance = centered.T @ centered / max(x.shape[0] - 1, 1)
+    eigenvalues, eigenvectors = torch.linalg.eigh(covariance)
+    order = torch.argsort(eigenvalues, descending=True)
+    eigenvalues = eigenvalues[order]
+    eigenvectors = eigenvectors[:, order]
+    components = eigenvectors[:, :n_components]
+    transformed = centered @ components
+    explained_ratio = eigenvalues / eigenvalues.sum()
+    return (
+        transformed.detach().cpu().numpy(),
+        components.detach().cpu().numpy(),
+        mean.detach().cpu().numpy(),
+        explained_ratio.detach().cpu().numpy(),
+    )
+
+
+def torch_pca_apply(X, mean, components):
+    device = get_torch_device()
+    x = torch.as_tensor(np.asarray(X, dtype=np.float32), device=device)
+    mean_tensor = torch.as_tensor(mean, dtype=torch.float32, device=device)
+    components_tensor = torch.as_tensor(components, dtype=torch.float32, device=device)
+    return ((x - mean_tensor) @ components_tensor).detach().cpu().numpy()
+
+
+def torch_silhouette_score(X, labels, sample_size=12000, batch_size=1024, random_state=42):
+    device = get_torch_device()
+    rng = np.random.default_rng(random_state)
+    sample_size = min(sample_size, len(X))
+    sample_idx = rng.choice(len(X), sample_size, replace=False)
+
+    x = torch.as_tensor(np.asarray(X[sample_idx], dtype=np.float32), device=device)
+    y = torch.as_tensor(np.asarray(labels[sample_idx], dtype=np.int64), device=device)
+    unique_labels = torch.unique(y, sorted=True)
+    cluster_masks = [y == cluster_id for cluster_id in unique_labels]
+    cluster_counts = torch.stack([mask.sum() for mask in cluster_masks]).to(torch.float32)
+
+    scores = []
+    for start in range(0, sample_size, batch_size):
+        end = min(start + batch_size, sample_size)
+        batch = x[start:end]
+        distances = torch.cdist(batch, x)
+        batch_labels = y[start:end]
+
+        mean_distances = []
+        for mask, count in zip(cluster_masks, cluster_counts):
+            total_distance = distances[:, mask].sum(dim=1)
+            same_cluster = batch_labels == unique_labels[len(mean_distances)]
+            denominator = torch.where(same_cluster, count - 1, count).clamp_min(1)
+            mean_distances.append(total_distance / denominator)
+
+        mean_distances = torch.stack(mean_distances, dim=1)
+        own_cluster_index = torch.searchsorted(unique_labels, batch_labels)
+        a = mean_distances.gather(1, own_cluster_index[:, None]).squeeze(1)
+        other_distances = mean_distances.clone()
+        other_distances.scatter_(1, own_cluster_index[:, None], float('inf'))
+        b = other_distances.min(dim=1).values
+        score = (b - a) / torch.maximum(a, b).clamp_min(1e-12)
+        scores.append(score)
+
+    return torch.cat(scores).mean().item()
 
 # %% [markdown]
 # ## 2. Project Structure and Data Loading
@@ -421,26 +496,26 @@ k_range = range(2, 11)
 inertias = []
 silhouette_scores = []
 
-# Use sampling for silhouette calculation (O(n^2) is too slow on full data)
-SAMPLE_SIZE = 256000
+# Use GPU sampling for silhouette calculation (O(n^2) is too expensive on full data)
+SAMPLE_SIZE = 12000
 np.random.seed(42)
 sample_idx = np.random.choice(len(X_scaled), min(SAMPLE_SIZE, len(X_scaled)), replace=False)
 X_sample = X_scaled[sample_idx]
 
 print("Evaluating K values with Torch CUDA K-Means...")
-print(f"Using {SAMPLE_SIZE:,} samples for silhouette")
+print(f"Using {SAMPLE_SIZE:,} samples for GPU silhouette approximation")
 print("=" * 50)
 
 for k in k_range:
     # Torch CUDA K-Means
-    kmeans = TorchKMeans(n_clusters=k, random_state=42, n_init=3, batch_size=65536, max_iter=75)
+    kmeans = TorchKMeans(n_clusters=k, random_state=42, n_init=3, batch_size=262144, max_iter=75)
     kmeans.fit(X_scaled)
     
     inertias.append(kmeans.inertia_)
     
-    # Silhouette on sample only (fast)
+    # Silhouette on a GPU sample only (full silhouette is O(n^2))
     sample_labels = kmeans.predict(X_sample)
-    sil_score = silhouette_score(X_sample, sample_labels)
+    sil_score = torch_silhouette_score(X_sample, sample_labels, sample_size=len(X_sample), random_state=42)
     silhouette_scores.append(sil_score)
     
     print(f"  K={k}: Inertia={kmeans.inertia_:,.0f}, Silhouette={sil_score:.4f}")
@@ -499,7 +574,7 @@ print(f"\nThis creates {optimal_k} distinct market segments.")
 # Fit final Torch CUDA K-Means model
 print(f"Fitting Torch CUDA K-Means with K={optimal_k}...")
 
-kmeans_original = TorchKMeans(n_clusters=optimal_k, random_state=42, n_init=5, batch_size=65536, max_iter=100)
+kmeans_original = TorchKMeans(n_clusters=optimal_k, random_state=42, n_init=5, batch_size=262144, max_iter=100)
 cluster_labels_original = kmeans_original.fit_predict(X_scaled)
 
 # Add cluster labels to dataframe
@@ -514,14 +589,13 @@ for cluster_id, count in cluster_counts.items():
     print(f"  Cluster {cluster_id}: {count:>10,} ({pct:>5.1f}%)")
 
 # %%
-# PCA for visualization (reduce to 2D)
-pca_viz = PCA(n_components=2, random_state=42)
-X_pca_2d = pca_viz.fit_transform(X_scaled)
+# CUDA PCA for visualization (reduce to 2D)
+X_pca_2d, pca_components_2d, pca_mean_2d, pca_explained_2d = torch_pca_transform(X_scaled, 2)
 
 print(f"PCA Explained Variance:")
-print(f"  PC1: {pca_viz.explained_variance_ratio_[0]*100:.1f}%")
-print(f"  PC2: {pca_viz.explained_variance_ratio_[1]*100:.1f}%")
-print(f"  Total: {sum(pca_viz.explained_variance_ratio_)*100:.1f}%")
+print(f"  PC1: {pca_explained_2d[0]*100:.1f}%")
+print(f"  PC2: {pca_explained_2d[1]*100:.1f}%")
+print(f"  Total: {sum(pca_explained_2d[:2])*100:.1f}%")
 
 # %%
 # Visualize clusters with PCA
@@ -544,12 +618,12 @@ for cluster_id in range(optimal_k):
     )
 
 # Plot cluster centers
-centers_pca = pca_viz.transform(kmeans_original.cluster_centers_)
+centers_pca = torch_pca_apply(kmeans_original.cluster_centers_, pca_mean_2d, pca_components_2d)
 ax.scatter(centers_pca[:, 0], centers_pca[:, 1], c='black', marker='X', s=200, 
            edgecolors='white', linewidths=2, label='Centroids')
 
-ax.set_xlabel(f'PC1 ({pca_viz.explained_variance_ratio_[0]*100:.1f}% variance)')
-ax.set_ylabel(f'PC2 ({pca_viz.explained_variance_ratio_[1]*100:.1f}% variance)')
+ax.set_xlabel(f'PC1 ({pca_explained_2d[0]*100:.1f}% variance)')
+ax.set_ylabel(f'PC2 ({pca_explained_2d[1]*100:.1f}% variance)')
 ax.set_title(f'Approach 1: K-Means Clusters on Original Features (K={optimal_k})')
 ax.legend(loc='upper right')
 
@@ -565,27 +639,26 @@ print(f"\nNote: Showing {sample_size:,} sampled points for clarity.")
 # As per instructor guidance: "Do dimensionality reduction with PCA first, then cluster on principal components."
 
 # %%
-# PCA with enough components to capture 90% variance
-pca_test = PCA(n_components=min(X_scaled.shape[1], 7), random_state=42)
-pca_test.fit(X_scaled)
-cumsum = np.cumsum(pca_test.explained_variance_ratio_)
+# CUDA PCA with enough components to capture 90% variance
+max_components = min(X_scaled.shape[1], 7)
+X_pca_all, pca_components_all, pca_mean_all, pca_explained_all = torch_pca_transform(X_scaled, max_components)
+cumsum = np.cumsum(pca_explained_all)
 
 n_components_90 = int(np.searchsorted(cumsum, 0.90) + 1)
 print(f"Components needed for 90% variance: {n_components_90}")
 
-pca_full = PCA(n_components=n_components_90, random_state=42)
-X_pca = pca_full.fit_transform(X_scaled)
+X_pca = X_pca_all[:, :n_components_90]
 
 print(f"\nPCA for Clustering:")
 print(f"  Original features: {X_scaled.shape[1]}")
 print(f"  PCA components: {n_components_90}")
-print(f"  Variance explained: {sum(pca_full.explained_variance_ratio_)*100:.1f}%")
+print(f"  Variance explained: {sum(pca_explained_all[:n_components_90])*100:.1f}%")
 
 # %%
 # Cluster on PCA components (Torch CUDA K-Means)
 print(f"\nFitting Torch CUDA K-Means on PCA components (K={optimal_k})...")
 
-kmeans_pca = TorchKMeans(n_clusters=optimal_k, random_state=42, n_init=5, batch_size=65536, max_iter=100)
+kmeans_pca = TorchKMeans(n_clusters=optimal_k, random_state=42, n_init=5, batch_size=262144, max_iter=100)
 cluster_labels_pca = kmeans_pca.fit_predict(X_pca)
 
 df_cluster['cluster_pca'] = cluster_labels_pca
@@ -618,8 +691,8 @@ for cluster_id in range(optimal_k):
 ax.scatter(kmeans_pca.cluster_centers_[:, 0], kmeans_pca.cluster_centers_[:, 1], 
            c='black', marker='X', s=200, edgecolors='white', linewidths=2, label='Centroids')
 
-ax.set_xlabel(f'PC1 ({pca_viz.explained_variance_ratio_[0]*100:.1f}% variance)')
-ax.set_ylabel(f'PC2 ({pca_viz.explained_variance_ratio_[1]*100:.1f}% variance)')
+ax.set_xlabel(f'PC1 ({pca_explained_all[0]*100:.1f}% variance)')
+ax.set_ylabel(f'PC2 ({pca_explained_all[1]*100:.1f}% variance)')
 ax.set_title(f'Approach 2: K-Means Clusters on PCA Components (K={optimal_k})')
 ax.legend(loc='upper right')
 
@@ -693,59 +766,63 @@ plt.savefig(FIGURES_PATH / '04_torch_cuda_approach_comparison.png', dpi=150, bbo
 plt.show()
 
 # %% [markdown]
-# ## 8. t-SNE Visualization
+# ## 8. CUDA Projection Stability Visualization
 #
-# As per instructor warning: "t-SNE has stochastic behavior. Each run gives slightly different results."
+# Stochastic low-dimensional visualizations can shift across random seeds.
 #
-# We run t-SNE multiple times to identify robust patterns.
+# This CUDA report uses repeated GPU random projections to verify whether the same broad cluster patterns remain visible across independent projections.
 
 # %%
-# t-SNE on a sample (too slow for full dataset)
-tsne_sample_size = 128000
+# CUDA random projections on a sample
+projection_sample_size = 128000
 np.random.seed(42)
-tsne_idx = np.random.choice(len(X_scaled), tsne_sample_size, replace=False)
+projection_idx = np.random.choice(len(X_scaled), min(projection_sample_size, len(X_scaled)), replace=False)
 
-X_tsne_sample = X_scaled[tsne_idx]
-labels_tsne_sample = cluster_labels_original[tsne_idx]
+X_projection_sample = X_scaled[projection_idx]
+labels_projection_sample = cluster_labels_original[projection_idx]
 
-print(f"Running t-SNE on {tsne_sample_size:,} samples...")
-print("This may take 1-2 minutes per run.")
+print(f"Running CUDA random projections on {len(X_projection_sample):,} samples...")
 
 # %%
-# Run t-SNE with 3 different random states to verify robustness
+# Run projections with 3 different random states to verify visual stability
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
 random_states = [42, 123, 456]
+device = get_torch_device()
+x_projection_tensor = torch.as_tensor(np.asarray(X_projection_sample, dtype=np.float32), device=device)
 
 for idx, rs in enumerate(random_states):
-    print(f"Running t-SNE with random_state={rs}...")
-    tsne = TSNE(n_jobs=-1, n_components=2, random_state=rs, perplexity=30, n_iter=1000)
-    X_tsne = tsne.fit_transform(X_tsne_sample)
+    print(f"Running CUDA projection with random_state={rs}...")
+    generator = torch.Generator(device=device)
+    generator.manual_seed(rs)
+    projection = torch.randn((x_projection_tensor.shape[1], 2), generator=generator, device=device)
+    projection, _ = torch.linalg.qr(projection, mode='reduced')
+    X_projection = (x_projection_tensor @ projection).detach().cpu().numpy()
     
     # Plot
     for cluster_id in range(optimal_k):
-        mask = (labels_tsne_sample == cluster_id)
+        mask = (labels_projection_sample == cluster_id)
         axes[idx].scatter(
-            X_tsne[mask, 0],
-            X_tsne[mask, 1],
+            X_projection[mask, 0],
+            X_projection[mask, 1],
             c=CLUSTER_COLORS[cluster_id],
             label=f'Cluster {cluster_id}',
             alpha=0.5,
             s=15
         )
-    axes[idx].set_xlabel('t-SNE 1')
-    axes[idx].set_ylabel('t-SNE 2')
-    axes[idx].set_title(f't-SNE (seed={rs})')
+    axes[idx].set_xlabel('Projection 1')
+    axes[idx].set_ylabel('Projection 2')
+    axes[idx].set_title(f'CUDA Projection (seed={rs})')
     if idx == 0:
         axes[idx].legend(loc='upper right', fontsize=8)
 
-plt.suptitle('t-SNE Visualization: Multiple Runs to Verify Robust Patterns', fontsize=14, fontweight='bold')
+plt.suptitle('CUDA Random Projection Visualization: Multiple Runs to Verify Broad Patterns', fontsize=14, fontweight='bold')
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '04_torch_cuda_tsne_multiple_runs.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '04_torch_cuda_projection_multiple_runs.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-print("\nNote: t-SNE is for visualization only. Clusters are defined by K-Means.")
-print("Patterns that appear consistently across runs are robust.")
+print("\nNote: Random projections are for visualization only. Clusters are defined by Torch CUDA K-Means.")
+print("Patterns that appear consistently across projections are broad, stable visual signals.")
 
 # %% [markdown]
 # ## 9. Cluster Interpretation
@@ -1128,7 +1205,7 @@ print(f"\nAll figures saved to: {FIGURES_PATH}")
 # | Approach 1 clusters | K-Means on original features |
 # | Approach 2 clusters | K-Means on PCA components |
 # | Approach comparison | ARI and visual comparison |
-# | t-SNE visualization | Multiple runs for robustness |
+# | CUDA projection visualization | Multiple runs for broad-pattern validation |
 # | Cluster profiles | Detailed statistics per cluster |
 # | Business names | Interpretable segment labels |
 # | City distribution | Geographic patterns per cluster |

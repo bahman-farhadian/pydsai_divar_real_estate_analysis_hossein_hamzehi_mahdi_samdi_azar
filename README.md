@@ -2,7 +2,7 @@
 
 This project was done by Hossein Hamzehei and Mahdi Samdi Azar for the course named Data Science & AI Introductory Course with Python, conducted by the Department of Mathematical Sciences, Sharif University of Technology.
 
-The repository contains a complete, reproducible real estate analysis pipeline for the Divar Real Estate Ads dataset. It includes compressed source data, cell-structured Python analysis files, environment requirements, data compression utilities, and server-friendly reporting instructions.
+This repository provides a complete, reproducible real estate analysis pipeline for the Divar Real Estate Ads dataset. It includes compressed source data, cell-structured Python analysis files, pinned runtime requirements, data compression utilities, and server-friendly HTML reporting.
 
 ## Project Structure
 
@@ -37,7 +37,8 @@ Generated files are ignored by Git:
 Divar-Real-State-Ads/*.csv
 data/processed/
 notebooks/outputs/
-reports/html/*.ipynb
+*.ipynb
+.ipynb_checkpoints/
 ```
 
 ## Runtime Target
@@ -48,14 +49,14 @@ The environment uses CUDA-enabled Python packages where applicable and keeps all
 
 The baseline analysis files use pandas and scikit-learn. CSV loading uses the PyArrow engine where available, and the pipeline writes Parquet intermediates so later stages can avoid repeatedly parsing large CSV files.
 
-The optimized alternatives are included as separate deliverables:
+The project also includes performance-oriented implementations:
 
 ```text
 notebooks/02_eda_polars_duckdb.py
 notebooks/04_clustering_TorchCUDAKMeans.py
 ```
 
-`02_eda_polars_duckdb.py` demonstrates a parallel Polars/DuckDB implementation for data engineering and aggregation. `04_clustering_TorchCUDAKMeans.py` uses PyTorch CUDA for K-Means on CUDA-capable NVIDIA GPUs and falls back to CPU if CUDA is unavailable.
+`02_eda_polars_duckdb.py` provides a parallel Polars/DuckDB implementation for data engineering and aggregation. `04_clustering_TorchCUDAKMeans.py` provides a PyTorch CUDA implementation for K-Means, CUDA-based PCA, CUDA-based silhouette sampling, and CUDA projection visualizations on CUDA-capable NVIDIA GPUs.
 
 Modern RAPIDS/cuML is not pinned as a dependency for this workstation target because current RAPIDS releases require newer GPU architecture than Pascal/GTX 1080. The CUDA path in this repository is therefore implemented with PyTorch CUDA, which supports the selected environment.
 
@@ -134,7 +135,7 @@ python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_da
 | Market analysis | `03_market_analysis.py` | Produce stakeholder-focused summaries for buyer and seller decisions. |
 | Clustering | `04_clustering_MiniBatchKMeans.py` | Segment listings into interpretable market groups using the fast clustering workflow. |
 | Clustering validation | `04_clustering_StandardKMeans.py` | Run the full K-Means comparison for final cluster validation. |
-| CUDA clustering | `04_clustering_TorchCUDAKMeans.py` | Run optional PyTorch CUDA K-Means for GPU-backed clustering. |
+| CUDA clustering | `04_clustering_TorchCUDAKMeans.py` | Run the PyTorch CUDA clustering report with GPU-backed K-Means, PCA, silhouette sampling, and projection visualization. |
 | Price prediction | `05_price_prediction.py` | Train price-per-square-meter models and identify over-valued and under-valued listings. |
 | Text classification | `06_text_classification.py` | Classify listing text and infer missing user-type labels. |
 
@@ -158,13 +159,13 @@ python scripts/export_html.py --input notebooks/05_price_prediction.py --output 
 python scripts/export_html.py --input notebooks/06_text_classification.py --output reports/html/06_text_classification.html
 ```
 
-Export the full StandardKMeans validation report when required:
+Export the full StandardKMeans validation report:
 
 ```bash
 python scripts/export_html.py --input notebooks/04_clustering_StandardKMeans.py --output reports/html/04_clustering_StandardKMeans.html
 ```
 
-Export the optimized portfolio variants when required:
+Export the performance-oriented reports:
 
 ```bash
 python scripts/export_html.py --input notebooks/02_eda_polars_duckdb.py --output reports/html/02_eda_polars_duckdb.html
