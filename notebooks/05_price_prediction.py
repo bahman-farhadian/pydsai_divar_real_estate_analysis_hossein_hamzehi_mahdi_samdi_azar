@@ -1629,7 +1629,7 @@ print(f"""
 - price_predictions.csv: All predictions with value categories
 - model_comparison.csv: R², RMSE, MAE for all models
 - feature_importance.csv: Feature importance rankings
-- Figures: 05_*.png in outputs/figures/
+- Figures: 05_*.png in reports/figures/
 
 {'='*70}
 Phase 5 Complete 

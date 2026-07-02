@@ -2,9 +2,10 @@
 Divar-Real-State-Ads/divar_real_estate_ads.csv
 Divar-Real-State-Ads/sampled_data.csv
 
-# Legacy generated pipeline outputs and model artifacts
+# Legacy generated-output directories; active outputs must use reports/
 data/
 notebooks/outputs/
+reports/notebooks/
 
 # Generated report artifacts
 reports/data/

@@ -20,6 +20,7 @@ class Stage:
     input_path: Path
     output_path: Path
     runtime: str
+    depends_on: tuple[str, ...] = ()
 
 
 def find_project_root(start: Path) -> Path:
@@ -62,7 +63,7 @@ def run_stage(project_root: Path, stage: Stage, timeout: int) -> dict[str, str]:
         cwd=project_root,
         text=True,
         capture_output=True,
-        env={**os.environ, "MPLBACKEND": "Agg", "PYDEVD_DISABLE_FILE_VALIDATION": "1"},
+        env={**os.environ, "PYDEVD_DISABLE_FILE_VALIDATION": "1"},
     )
     finished_at = datetime.now(timezone.utc)
     duration = time.perf_counter() - start
@@ -100,19 +101,56 @@ def run_stage(project_root: Path, stage: Stage, timeout: int) -> dict[str, str]:
     }
 
 
-def run_group(project_root: Path, stages: list[Stage], jobs: int, timeout: int) -> list[dict[str, str]]:
+def run_stages(project_root: Path, stages: list[Stage], jobs: int, timeout: int) -> list[dict[str, str]]:
     results: list[dict[str, str]] = []
     if not stages:
         return results
 
+    jobs = max(1, jobs)
+    stage_map = {stage.name: stage for stage in stages}
+    unknown_dependencies = sorted(
+        {
+            dependency
+            for stage in stages
+            for dependency in stage.depends_on
+            if dependency not in stage_map
+        }
+    )
+    if unknown_dependencies:
+        raise ValueError(f"Unknown stage dependencies: {', '.join(unknown_dependencies)}")
+
+    pending = dict(stage_map)
+    completed: set[str] = set()
+    running = {}
+
     with ThreadPoolExecutor(max_workers=max(1, min(jobs, len(stages)))) as executor:
-        future_map = {executor.submit(run_stage, project_root, stage, timeout): stage for stage in stages}
-        for future in as_completed(future_map):
+        while pending or running:
+            ready = [
+                stage
+                for stage in pending.values()
+                if all(dependency in completed for dependency in stage.depends_on)
+            ]
+            free_slots = max(0, jobs - len(running))
+            for stage in ready[:free_slots]:
+                future = executor.submit(run_stage, project_root, stage, timeout)
+                running[future] = stage
+                del pending[stage.name]
+
+            if not running:
+                blocked = ", ".join(sorted(pending))
+                raise RuntimeError(f"Pipeline dependency deadlock. Pending stages: {blocked}")
+
+            for future in as_completed(running):
+                stage = running.pop(future)
+                break
+
             result = future.result()
             results.append(result)
             print(f"{result['status'].upper()}: {result['stage']} ({result['duration_seconds']}s)")
             if result["status"] != "success":
                 raise RuntimeError(f"Stage failed: {result['stage']} - see {result['log']}")
+            completed.add(stage.name)
+
     return results
 
 
@@ -153,60 +191,87 @@ def main() -> None:
 
     use_cuda = gpu_available() and not args.skip_cuda
 
-    baseline = [
+    stages = [
         Stage("01_data_quality", Path("notebooks/01_data_quality.py"), Path("reports/html/01_data_quality.html"), "cpu"),
-    ]
-    after_baseline_group = [
-        Stage("02_eda", Path("notebooks/02_eda.py"), Path("reports/html/02_eda.html"), "cpu"),
-        Stage("02_eda_polars_duckdb", Path("notebooks/02_eda_polars_duckdb.py"), Path("reports/html/02_eda_polars_duckdb.html"), "cpu-parallel"),
-        Stage("06_text_classification", Path("notebooks/06_text_classification.py"), Path("reports/html/06_text_classification.html"), "cpu"),
-    ]
-    analysis_group = [
-        Stage("03_market_analysis", Path("notebooks/03_market_analysis.py"), Path("reports/html/03_market_analysis.html"), "cpu"),
-        Stage("04_clustering_MiniBatchKMeans", Path("notebooks/04_clustering_MiniBatchKMeans.py"), Path("reports/html/04_clustering_MiniBatchKMeans.html"), "cpu"),
-        Stage("05_price_prediction", Path("notebooks/05_price_prediction.py"), Path("reports/html/05_price_prediction.html"), "cpu"),
+        Stage("02_eda", Path("notebooks/02_eda.py"), Path("reports/html/02_eda.html"), "cpu", ("01_data_quality",)),
+        Stage(
+            "02_eda_polars_duckdb",
+            Path("notebooks/02_eda_polars_duckdb.py"),
+            Path("reports/html/02_eda_polars_duckdb.html"),
+            "cpu-parallel",
+            ("01_data_quality",),
+        ),
+        Stage(
+            "06_text_classification",
+            Path("notebooks/06_text_classification.py"),
+            Path("reports/html/06_text_classification.html"),
+            "cpu",
+            ("01_data_quality",),
+        ),
+        Stage(
+            "03_market_analysis",
+            Path("notebooks/03_market_analysis.py"),
+            Path("reports/html/03_market_analysis.html"),
+            "cpu",
+            ("02_eda",),
+        ),
+        Stage(
+            "04_clustering_MiniBatchKMeans",
+            Path("notebooks/04_clustering_MiniBatchKMeans.py"),
+            Path("reports/html/04_clustering_MiniBatchKMeans.html"),
+            "cpu",
+            ("02_eda",),
+        ),
+        Stage(
+            "05_price_prediction",
+            Path("notebooks/05_price_prediction.py"),
+            Path("reports/html/05_price_prediction.html"),
+            "cpu",
+            ("02_eda",),
+        ),
     ]
 
     if use_cuda:
-        after_baseline_group.append(
+        stages.append(
             Stage(
                 "06_text_classification_TorchCUDA",
                 Path("notebooks/06_text_classification_TorchCUDA.py"),
                 Path("reports/html/06_text_classification_TorchCUDA.html"),
                 "cuda",
+                ("01_data_quality",),
             )
         )
-        analysis_group.extend(
+        stages.extend(
             [
                 Stage(
                     "04_clustering_TorchCUDAKMeans",
                     Path("notebooks/04_clustering_TorchCUDAKMeans.py"),
                     Path("reports/html/04_clustering_TorchCUDAKMeans.html"),
                     "cuda",
+                    ("02_eda",),
                 ),
                 Stage(
                     "05_price_prediction_TorchCUDA",
                     Path("notebooks/05_price_prediction_TorchCUDA.py"),
                     Path("reports/html/05_price_prediction_TorchCUDA.html"),
                     "cuda",
+                    ("02_eda",),
                 ),
             ]
         )
 
     if args.include_standard_kmeans:
-        analysis_group.append(
+        stages.append(
             Stage(
                 "04_clustering_StandardKMeans",
                 Path("notebooks/04_clustering_StandardKMeans.py"),
                 Path("reports/html/04_clustering_StandardKMeans.html"),
                 "cpu",
+                ("02_eda",),
             )
         )
 
-    all_results: list[dict[str, str]] = []
-    all_results.extend(run_group(project_root, baseline, jobs=1, timeout=args.timeout))
-    all_results.extend(run_group(project_root, after_baseline_group, jobs=args.jobs, timeout=args.timeout))
-    all_results.extend(run_group(project_root, analysis_group, jobs=args.jobs, timeout=args.timeout))
+    all_results = run_stages(project_root, stages, jobs=args.jobs, timeout=args.timeout)
     write_runtime_summary(project_root, all_results)
 
 

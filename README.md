@@ -13,6 +13,7 @@ This repository provides a reproducible real estate analysis pipeline for the Di
 │   ├── divar_real_estate_ads.csv.zst
 │   └── sampled_data.csv.zst
 ├── LICENSE
+├── Makefile
 ├── README.md
 ├── requirements.txt
 ├── scripts/
@@ -79,11 +80,11 @@ The main pipeline uses:
 Divar-Real-State-Ads/divar_real_estate_ads.csv
 ```
 
-`sampled_data.csv` is retained as an auxiliary dataset archive and is not required by the main pipeline.
+`sampled_data.csv.zst` was used during development for faster local checks. The final pipeline does not read it; it is retained only as a reference archive.
 
 ## Setup
 
-Use Python 3.10 or 3.11.
+Use Python 3.10 or 3.11. The Makefile is the primary command surface for setup, data extraction, execution, export, and cleanup.
 
 ```bash
 git clone git@github.com:bahman-farhadian/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar.git
@@ -94,31 +95,19 @@ cd pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar
 ```
 
 ```bash
-python3 -m venv .venv
-```
-
-```bash
-source .venv/bin/activate
-```
-
-```bash
-python -m pip install --upgrade pip
-```
-
-```bash
-python -m pip install -r requirements.txt
+make setup
 ```
 
 Validate the runtime:
 
 ```bash
-python scripts/check_environment.py
+make check
 ```
 
 Verify CUDA directly:
 
 ```bash
-python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'none')"
+.venv/bin/python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'none')"
 ```
 
 ## Data Preparation
@@ -126,23 +115,23 @@ python -c "import torch; print('CUDA available:', torch.cuda.is_available()); pr
 Decompress the main dataset before running the pipeline:
 
 ```bash
-python scripts/compress_data.py decompress --input Divar-Real-State-Ads/divar_real_estate_ads.csv.zst --output Divar-Real-State-Ads/divar_real_estate_ads.csv
+make extract-data
 ```
 
 Decompress the sampled dataset only when needed:
 
 ```bash
-python scripts/compress_data.py decompress --input Divar-Real-State-Ads/sampled_data.csv.zst --output Divar-Real-State-Ads/sampled_data.csv
+make extract-sample
 ```
 
 Recreate compressed archives:
 
 ```bash
-python scripts/compress_data.py compress --input Divar-Real-State-Ads/divar_real_estate_ads.csv --output Divar-Real-State-Ads/divar_real_estate_ads.csv.zst
+make compress-data
 ```
 
 ```bash
-python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_data.csv --output Divar-Real-State-Ads/sampled_data.csv.zst
+make compress-sample
 ```
 
 ## Pipeline Graph
@@ -171,19 +160,19 @@ flowchart TD
 Run the complete dependency-aware pipeline:
 
 ```bash
-python scripts/run_pipeline.py --jobs 4
+make run JOBS=4
 ```
 
 Run the complete pipeline plus full StandardKMeans validation:
 
 ```bash
-python scripts/run_pipeline.py --jobs 4 --include-standard-kmeans
+make run-standard JOBS=4
 ```
 
 Run without CUDA alternatives:
 
 ```bash
-python scripts/run_pipeline.py --jobs 4 --skip-cuda
+make run-cpu JOBS=4
 ```
 
 The runner writes:
@@ -197,6 +186,8 @@ reports/figures/
 reports/models/
 ```
 
+The scheduler runs `01_data_quality.py` first. After the cleaned baseline exists, it can run text classification and EDA work in parallel. Market analysis, clustering, and price prediction start as soon as `02_eda.py` finishes and do not wait for independent text-classification stages.
+
 Copy the complete report bundle from a headless server with:
 
 ```bash
@@ -205,46 +196,46 @@ scp -r reports/ USER@HOST:~
 
 ## Individual Report Execution
 
-Each report can also be exported directly:
+Each report can also be exported directly through the Makefile:
 
 ```bash
-python scripts/export_html.py --input notebooks/01_data_quality.py --output reports/html/01_data_quality.html
+make export INPUT=notebooks/01_data_quality.py OUTPUT=reports/html/01_data_quality.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/02_eda.py --output reports/html/02_eda.html
+make export INPUT=notebooks/02_eda.py OUTPUT=reports/html/02_eda.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/02_eda_polars_duckdb.py --output reports/html/02_eda_polars_duckdb.html
+make export INPUT=notebooks/02_eda_polars_duckdb.py OUTPUT=reports/html/02_eda_polars_duckdb.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/03_market_analysis.py --output reports/html/03_market_analysis.html
+make export INPUT=notebooks/03_market_analysis.py OUTPUT=reports/html/03_market_analysis.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/04_clustering_MiniBatchKMeans.py --output reports/html/04_clustering_MiniBatchKMeans.html
+make export INPUT=notebooks/04_clustering_MiniBatchKMeans.py OUTPUT=reports/html/04_clustering_MiniBatchKMeans.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/04_clustering_TorchCUDAKMeans.py --output reports/html/04_clustering_TorchCUDAKMeans.html
+make export INPUT=notebooks/04_clustering_TorchCUDAKMeans.py OUTPUT=reports/html/04_clustering_TorchCUDAKMeans.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/05_price_prediction.py --output reports/html/05_price_prediction.html
+make export INPUT=notebooks/05_price_prediction.py OUTPUT=reports/html/05_price_prediction.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/05_price_prediction_TorchCUDA.py --output reports/html/05_price_prediction_TorchCUDA.html
+make export INPUT=notebooks/05_price_prediction_TorchCUDA.py OUTPUT=reports/html/05_price_prediction_TorchCUDA.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/06_text_classification.py --output reports/html/06_text_classification.html
+make export INPUT=notebooks/06_text_classification.py OUTPUT=reports/html/06_text_classification.html
 ```
 
 ```bash
-python scripts/export_html.py --input notebooks/06_text_classification_TorchCUDA.py --output reports/html/06_text_classification_TorchCUDA.html
+make export INPUT=notebooks/06_text_classification_TorchCUDA.py OUTPUT=reports/html/06_text_classification_TorchCUDA.html
 ```
 
 ## Analysis Stages
@@ -267,7 +258,7 @@ python scripts/export_html.py --input notebooks/06_text_classification_TorchCUDA
 
 | Path | Content |
 | --- | --- |
-| `reports/html/` | Executed HTML reports. |
+| `reports/html/` | Executed HTML reports with embedded visualizations. |
 | `reports/data/` | CSV and Parquet datasets, predictions, metrics, summaries, and model reports. |
 | `reports/figures/` | High-resolution generated figures. |
 | `reports/models/` | Saved scikit-learn and PyTorch model artifacts plus metadata. |
@@ -290,33 +281,46 @@ reports/runtime_summary.csv
 
 `scripts/run_pipeline.py` records runtime measurements in `reports/runtime_summary.csv`. After a full server run, use that file as the authoritative benchmark table for the generated report set.
 
-Observed workstation checks during development:
+Latest full server run:
 
 | Stage | Runtime |
 | --- | ---: |
-| `01_data_quality.py` | 93.314 seconds |
-| `02_eda.py` | 52.162 seconds |
-| `02_eda_polars_duckdb.py` | 15.402 seconds |
-| `04_clustering_TorchCUDAKMeans.py` | 30.763 seconds |
+| `01_data_quality.py` | 92.154 seconds |
+| `02_eda_polars_duckdb.py` | 16.072 seconds |
+| `02_eda.py` | 52.425 seconds |
+| `06_text_classification_TorchCUDA.py` | 274.796 seconds |
+| `06_text_classification.py` | 2865.971 seconds |
+| `03_market_analysis.py` | 17.047 seconds |
+| `04_clustering_TorchCUDAKMeans.py` | 37.302 seconds |
+| `05_price_prediction_TorchCUDA.py` | 470.191 seconds |
+| `05_price_prediction.py` | 3356.532 seconds |
+| `04_clustering_StandardKMeans.py` | 6747.071 seconds |
+| `04_clustering_MiniBatchKMeans.py` | 6860.868 seconds |
 
 ## Cleaning Generated Outputs
 
 Preview cleanup:
 
 ```bash
-python scripts/clean_outputs.py --dry-run
+make clean-dry
 ```
 
 Remove generated outputs without touching `.venv`, source files, Git history, or compressed dataset archives:
 
 ```bash
-python scripts/clean_outputs.py
+make clean
+```
+
+Also remove legacy generated-output directories from pre-final layouts:
+
+```bash
+make clean-legacy
 ```
 
 Also remove expanded CSV files when a fully fresh data extraction is required:
 
 ```bash
-python scripts/clean_outputs.py --include-expanded-csv
+make clean-all
 ```
 
 ## License

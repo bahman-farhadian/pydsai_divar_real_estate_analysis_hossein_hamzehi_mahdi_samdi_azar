@@ -82,6 +82,25 @@ def tokenize(text):
     return normalize_text(text).split()
 
 
+USER_TYPE_DISPLAY = {
+    'مشاور املاک': 'Real Estate Agent',
+    'شخصی': 'Private Seller',
+}
+
+
+def display_class_label(value):
+    if pd.isna(value):
+        return 'Unknown'
+    text = str(value)
+    if text in USER_TYPE_DISPLAY:
+        return USER_TYPE_DISPLAY[text]
+    return text.replace('-', ' ').replace('_', ' ').title()
+
+
+def display_class_labels(values):
+    return [display_class_label(value) for value in values]
+
+
 def build_vocab(texts, max_vocab=60000, min_freq=2):
     counter = Counter()
     for text in texts:
@@ -345,9 +364,9 @@ for ax, y_true, y_pred, encoder, title in [
     if matrix.shape[0] > 12:
         top_indices = np.argsort(matrix.sum(axis=1))[-12:]
         matrix = matrix[np.ix_(top_indices, top_indices)]
-        labels = encoder.classes_[top_indices]
+        labels = display_class_labels(encoder.classes_[top_indices])
     else:
-        labels = encoder.classes_
+        labels = display_class_labels(encoder.classes_)
     sns.heatmap(matrix, ax=ax, cmap='Blues', cbar=False)
     ax.set_title(title)
     ax.set_xlabel('Predicted')
@@ -391,8 +410,22 @@ user_history.to_csv(DATA_PROCESSED / 'text_classification_torch_cuda_user_type_h
 user_predictions.to_csv(DATA_PROCESSED / 'user_type_predictions_torch_cuda.csv', index=False)
 user_predictions.to_parquet(DATA_PROCESSED / 'user_type_predictions_torch_cuda.parquet', index=False, compression='zstd')
 
-cat_report = classification_report(cat_true, cat_pred, target_names=cat_encoder.classes_, output_dict=True, zero_division=0)
-user_report = classification_report(user_true, user_pred, target_names=user_encoder.classes_, output_dict=True, zero_division=0)
+cat_report = classification_report(
+    cat_true,
+    cat_pred,
+    labels=np.arange(len(cat_encoder.classes_)),
+    target_names=display_class_labels(cat_encoder.classes_),
+    output_dict=True,
+    zero_division=0,
+)
+user_report = classification_report(
+    user_true,
+    user_pred,
+    labels=np.arange(len(user_encoder.classes_)),
+    target_names=display_class_labels(user_encoder.classes_),
+    output_dict=True,
+    zero_division=0,
+)
 (DATA_PROCESSED / 'text_classification_torch_cuda_cat3_report.json').write_text(
     json.dumps(cat_report, indent=2, ensure_ascii=False),
     encoding='utf-8',
