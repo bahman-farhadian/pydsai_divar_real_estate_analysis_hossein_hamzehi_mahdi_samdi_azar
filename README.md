@@ -178,6 +178,15 @@ The scripts also save high-resolution figures under:
 notebooks/outputs/figures/
 ```
 
+During HTML export, `scripts/export_html.py` also copies generated figures and models into the report bundle:
+
+```text
+reports/notebooks/outputs/figures/
+reports/notebooks/outputs/models/
+```
+
+This makes `reports/` the only directory that needs to be copied back from a headless server after report generation.
+
 ## Outputs
 
 | Path | Created By |
