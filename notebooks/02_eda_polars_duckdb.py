@@ -168,7 +168,7 @@ try:
 except AttributeError:
     schema_names = list(scan.schema.keys())
 
-print(f"Loading source: {SOURCE_FILE.relative_to(PROJECT_ROOT).relative_to(PROJECT_ROOT)}")
+print(f"Loading source: {SOURCE_FILE.relative_to(PROJECT_ROOT)}")
 print(f"Columns: {len(schema_names)}")
 
 row_count = scan.select(pl.len().alias('row_count')).collect().item()
