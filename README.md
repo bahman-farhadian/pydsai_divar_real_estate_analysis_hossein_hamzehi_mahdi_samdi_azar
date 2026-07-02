@@ -154,7 +154,7 @@ flowchart TD
 Run the complete dependency-aware pipeline:
 
 ```bash
-make run JOBS=4
+make run
 ```
 
 The runner writes:
