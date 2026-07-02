@@ -86,7 +86,7 @@ print("Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -118,15 +118,15 @@ DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Figures path: {FIGURES_PATH}")
-print(f"Models path: {MODELS_PATH}")
+print("Project root: .")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
+print(f"Models path: {MODELS_PATH.relative_to(PROJECT_ROOT)}")
 
 # %%
 # Load the enhanced dataset from Phase 2
 DATA_FILE = DATA_PROCESSED / 'cleaned_data_with_features.csv'
 
-print(f"Loading data from: {DATA_FILE}")
+print(f"Loading data from: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 df_full = read_csv_fast(DATA_FILE)
 print(f"\n Full dataset: {len(df_full):,} rows, {len(df_full.columns)} columns")
 
@@ -1547,12 +1547,12 @@ print("=" * 60)
 # 1. Save best model
 model_path = MODELS_PATH / 'price_prediction_model.joblib'
 joblib.dump(best_model, model_path)
-print(f"\n Model saved: {model_path}")
+print(f"\n Model saved: {model_path.relative_to(PROJECT_ROOT)}")
 
 # 2. Save scaler
 scaler_path = MODELS_PATH / 'feature_scaler.joblib'
 joblib.dump(scaler, scaler_path)
-print(f" Scaler saved: {scaler_path}")
+print(f" Scaler saved: {scaler_path.relative_to(PROJECT_ROOT)}")
 
 # 3. Save predictions for test set
 predictions_df = sample_df[['city_slug', 'cat3_slug', 'building_size', 'rooms_numeric',
@@ -1564,18 +1564,18 @@ predictions_df.columns = ['city', 'property_type', 'size_sqm', 'rooms',
 pred_path = DATA_PROCESSED / 'price_predictions.csv'
 predictions_df.to_csv(pred_path, index=False)
 predictions_df.to_parquet(DATA_PROCESSED / 'price_predictions.parquet', index=False, compression='zstd')
-print(f" Predictions saved: {pred_path} ({len(predictions_df):,} rows)")
-print(f" Predictions saved: {DATA_PROCESSED / 'price_predictions.parquet'} ({len(predictions_df):,} rows)")
+print(f" Predictions saved: {pred_path.relative_to(PROJECT_ROOT)} ({len(predictions_df):,} rows)")
+print(f" Predictions saved: {(DATA_PROCESSED / 'price_predictions.parquet').relative_to(PROJECT_ROOT)} ({len(predictions_df):,} rows)")
 
 # 4. Save model comparison results
 results_path = DATA_PROCESSED / 'model_comparison.csv'
 results.to_csv(results_path, index=False)
-print(f" Model comparison saved: {results_path}")
+print(f" Model comparison saved: {results_path.relative_to(PROJECT_ROOT)}")
 
 # 5. Save feature importance
 importance_path = DATA_PROCESSED / 'feature_importance.csv'
 importance_df.to_csv(importance_path, index=False)
-print(f" Feature importance saved: {importance_path}")
+print(f" Feature importance saved: {importance_path.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 13. Conclusion

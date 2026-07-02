@@ -67,6 +67,8 @@ Modern RAPIDS/cuML is not pinned because current RAPIDS releases require newer G
 
 ## Dataset
 
+The analysis uses the public Kaggle dataset [Divar 2025 Real Estate Dataset](https://www.kaggle.com/datasets/valakhorasani/divar-real-estate-dataset1m-persian-property-ads/data), which contains one million Persian real estate advertisements from Divar.
+
 The repository stores the dataset as maximum-compression Zstandard archives:
 
 ```text
@@ -87,11 +89,11 @@ Divar-Real-State-Ads/divar_real_estate_ads.csv
 Use Python 3.10 or 3.11. The Makefile is the primary command surface for setup, data extraction, execution, and cleanup.
 
 ```bash
-git clone git@github.com:bahman-farhadian/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar.git
+git clone git@github.com:bahman-farhadian/divar-real-estate-ai.git
 ```
 
 ```bash
-cd pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar
+cd divar-real-estate-ai
 ```
 
 ```bash
@@ -220,17 +222,17 @@ Latest full server run:
 
 | Stage | Runtime |
 | --- | ---: |
-| `01_data_quality.py` | 95.079 seconds |
-| `02_eda_polars_duckdb.py` | 28.319 seconds |
-| `02_eda.py` | 56.355 seconds |
-| `03_market_analysis.py` | 17.627 seconds |
-| `06_text_classification_TorchCUDA.py` | 356.799 seconds |
-| `04_clustering_TorchCUDAKMeans.py` | 46.771 seconds |
-| `05_price_prediction_TorchCUDA.py` | 395.305 seconds |
-| `05_price_prediction.py` | 3935.304 seconds |
-| `06_text_classification.py` | 4895.791 seconds |
-| `04_clustering_MiniBatchKMeans.py` | 7572.145 seconds |
-| `04_clustering_StandardKMeans.py` | 7018.768 seconds |
+| `01_data_quality.py` | 95.374 seconds |
+| `02_eda_polars_duckdb.py` | 28.569 seconds |
+| `02_eda.py` | 56.462 seconds |
+| `03_market_analysis.py` | 24.509 seconds |
+| `06_text_classification_TorchCUDA.py` | 427.635 seconds |
+| `04_clustering_TorchCUDAKMeans.py` | 58.783 seconds |
+| `05_price_prediction_TorchCUDA.py` | 536.934 seconds |
+| `05_price_prediction.py` | 4083.103 seconds |
+| `06_text_classification.py` | 5056.960 seconds |
+| `04_clustering_StandardKMeans.py` | 7455.797 seconds |
+| `04_clustering_MiniBatchKMeans.py` | 7609.915 seconds |
 
 ## Cleaning Generated Outputs
 

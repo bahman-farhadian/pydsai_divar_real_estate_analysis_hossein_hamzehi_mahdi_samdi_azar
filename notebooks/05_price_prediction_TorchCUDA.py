@@ -56,7 +56,7 @@ def find_project_root(start=None):
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -101,8 +101,8 @@ FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Reports data path: {DATA_PROCESSED}")
+print("Project root: .")
+print(f"Reports data path: {DATA_PROCESSED.relative_to(PROJECT_ROOT)}")
 print(f"Torch device: {device}")
 if device.type == 'cuda':
     print(f"CUDA device: {torch.cuda.get_device_name(0)}")
@@ -370,8 +370,8 @@ metadata = {
     encoding='utf-8',
 )
 
-print(f"Saved predictions: {DATA_PROCESSED / 'price_predictions_torch_cuda.csv'}")
-print(f"Saved model: {model_path}")
+print(f"Saved predictions: {(DATA_PROCESSED / 'price_predictions_torch_cuda.csv').relative_to(PROJECT_ROOT)}")
+print(f"Saved model: {model_path.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 8. Summary

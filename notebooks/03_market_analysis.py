@@ -94,7 +94,7 @@ print("Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -124,9 +124,9 @@ FIGURES_PATH = REPORTS_PATH / 'figures'
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Processed data path: {DATA_PROCESSED}")
-print(f"Figures path: {FIGURES_PATH}")
+print("Project root: .")
+print(f"Processed data path: {DATA_PROCESSED.relative_to(PROJECT_ROOT)}")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 3. Load Data from Phase 2
@@ -137,7 +137,7 @@ print(f"Figures path: {FIGURES_PATH}")
 # Load the enhanced dataset from Phase 2
 DATA_FILE = DATA_PROCESSED / 'cleaned_data_with_features.csv'
 
-print(f"Loading data from: {DATA_FILE}")
+print(f"Loading data from: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 df = read_csv_fast(DATA_FILE)
 
 print(f"\nDataset loaded: {len(df):,} rows, {df.shape[1]} columns")
@@ -1145,7 +1145,7 @@ if len(amenity_df) > 0:
     amenity_df.to_csv(DATA_PROCESSED / 'market_analysis_amenity_impact.csv', index=False)
     print(f"Saved: market_analysis_amenity_impact.csv")
 
-print(f"\nAll figures saved to: {FIGURES_PATH}")
+print(f"\nAll figures saved to: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ---

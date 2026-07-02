@@ -99,7 +99,7 @@ print("Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -129,9 +129,9 @@ DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Figures path: {FIGURES_PATH}")
-print(f"Models path: {MODELS_PATH}")
+print("Project root: .")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
+print(f"Models path: {MODELS_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ---
@@ -144,10 +144,10 @@ CLEANED_FILE = DATA_PROCESSED / 'cleaned_data.csv'
 RAW_FILE = DATA_RAW / 'divar_real_estate_ads.csv'
 
 if CLEANED_FILE.exists():
-    print(f"Loading cleaned data from: {CLEANED_FILE}")
+    print(f"Loading cleaned data from: {CLEANED_FILE.relative_to(PROJECT_ROOT)}")
     df = read_csv_fast(CLEANED_FILE)
 else:
-    print(f"Loading raw data from: {RAW_FILE}")
+    print(f"Loading raw data from: {RAW_FILE.relative_to(PROJECT_ROOT)}")
     df = read_csv_fast(RAW_FILE)
 
 print(f"\nDataset loaded: {len(df):,} rows, {df.shape[1]} columns")
@@ -1182,7 +1182,7 @@ summary = {
 pd.DataFrame([summary]).to_csv(DATA_PROCESSED / 'classification_summary.csv', index=False)
 print(f"Saved: classification_summary.csv")
 
-print(f"\nAll figures saved to: {FIGURES_PATH}")
+print(f"\nAll figures saved to: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ---

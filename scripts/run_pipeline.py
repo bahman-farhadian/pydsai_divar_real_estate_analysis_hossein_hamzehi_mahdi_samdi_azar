@@ -44,6 +44,24 @@ def gpu_available() -> bool:
     return result.stdout.strip() == "True"
 
 
+def display_command(project_root: Path, command: list[str]) -> str:
+    display_parts = []
+    for part in command:
+        try:
+            path = Path(part)
+            if path.is_absolute():
+                display_parts.append(str(path.relative_to(project_root)))
+                continue
+        except ValueError:
+            pass
+        display_parts.append(part)
+    return " ".join(display_parts)
+
+
+def sanitize_output(project_root: Path, value: str) -> str:
+    return value.replace(str(project_root), ".")
+
+
 def run_stage(project_root: Path, stage: Stage, timeout: int) -> dict[str, str]:
     start = time.perf_counter()
     started_at = datetime.now(timezone.utc)
@@ -75,14 +93,14 @@ def run_stage(project_root: Path, stage: Stage, timeout: int) -> dict[str, str]:
     log_path.write_text(
         "\n".join(
             [
-                f"command: {' '.join(command)}",
+                f"command: {display_command(project_root, command)}",
                 f"returncode: {result.returncode}",
                 "",
                 "[stdout]",
-                result.stdout,
+                sanitize_output(project_root, result.stdout),
                 "",
                 "[stderr]",
-                result.stderr,
+                sanitize_output(project_root, result.stderr),
             ]
         ),
         encoding="utf-8",

@@ -141,9 +141,9 @@ FIGURES_PATH = REPORTS_PATH / 'figures'
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Reports data path: {DATA_PROCESSED}")
-print(f"Figures path: {FIGURES_PATH}")
+print("Project root: .")
+print(f"Reports data path: {DATA_PROCESSED.relative_to(PROJECT_ROOT)}")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 3. Load Cleaned Data
@@ -168,7 +168,7 @@ try:
 except AttributeError:
     schema_names = list(scan.schema.keys())
 
-print(f"Loading source: {SOURCE_FILE.relative_to(PROJECT_ROOT)}")
+print(f"Loading source: {SOURCE_FILE.relative_to(PROJECT_ROOT).relative_to(PROJECT_ROOT)}")
 print(f"Columns: {len(schema_names)}")
 
 row_count = scan.select(pl.len().alias('row_count')).collect().item()

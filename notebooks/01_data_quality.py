@@ -93,7 +93,7 @@ print("Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -129,10 +129,10 @@ FIGURES_PATH = REPORTS_PATH / 'figures'
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Raw data path: {DATA_RAW}")
-print(f"Processed data path: {DATA_PROCESSED}")
-print(f"Figures path: {FIGURES_PATH}")
+print("Project root: .")
+print(f"Raw data path: {DATA_RAW.relative_to(PROJECT_ROOT)}")
+print(f"Processed data path: {DATA_PROCESSED.relative_to(PROJECT_ROOT)}")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 3. Data Loading and Verification
@@ -146,7 +146,7 @@ print(f"Figures path: {FIGURES_PATH}")
 # %%
 # Verify file existence and get metadata
 DATA_FILE = DATA_RAW / 'divar_real_estate_ads.csv'
-print(f"Data file: {DATA_FILE}")
+print(f"Data file: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 print(f"File exists: {DATA_FILE.exists()}")
 print(f"File size: {DATA_FILE.stat().st_size / 1024**3:.2f} GB")
 
@@ -162,7 +162,7 @@ print(f"Lines reported by wc -l: {wc_lines:,}")
 
 # %%
 # Load the FULL dataset
-print(f"Loading FULL dataset from: {DATA_FILE}")
+print(f"Loading FULL dataset from: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 print("This may take a few minutes for large files...")
 
 df = read_csv_fast(DATA_FILE)  # No nrows = load ALL records
@@ -284,7 +284,7 @@ ax.legend(loc='lower right')
 plt.tight_layout()
 plt.savefig(FIGURES_PATH / '01_missing_values.png', dpi=150, bbox_inches='tight')
 plt.show()
-print(f"\n Figure saved to: {FIGURES_PATH / '01_missing_values.png'}")
+print(f"\n Figure saved to: {(FIGURES_PATH / '01_missing_values.png').relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ### Data Completeness Heatmap
@@ -1204,7 +1204,7 @@ quality_summary['availability_category'] = pd.cut(
 )
 
 quality_summary.to_csv(DATA_PROCESSED / 'column_quality_summary.csv', index=False)
-print(f" Column quality summary saved to: {DATA_PROCESSED / 'column_quality_summary.csv'}")
+print(f" Column quality summary saved to: {(DATA_PROCESSED / 'column_quality_summary.csv').relative_to(PROJECT_ROOT)}")
 
 # Create overall summary table
 summary_data = {
@@ -1240,7 +1240,7 @@ summary_data = {
 
 summary_df = pd.DataFrame(summary_data)
 summary_df.to_csv(DATA_PROCESSED / 'data_quality_summary.csv', index=False)
-print(f" Data quality summary saved to: {DATA_PROCESSED / 'data_quality_summary.csv'}")
+print(f" Data quality summary saved to: {(DATA_PROCESSED / 'data_quality_summary.csv').relative_to(PROJECT_ROOT)}")
 
 print("\n" + "=" * 60)
 print("QUALITY SUMMARY TABLE")
@@ -1439,8 +1439,8 @@ print("\nSaving cleaned_data.csv (this may take a few minutes)...")
 df_cleaned.to_csv(DATA_PROCESSED / 'cleaned_data.csv', index=False)
 df_cleaned.to_parquet(DATA_PROCESSED / 'cleaned_data.parquet', index=False, compression='zstd')
 file_size = (DATA_PROCESSED / 'cleaned_data.csv').stat().st_size / 1024**3
-print(f" Saved: {DATA_PROCESSED / 'cleaned_data.csv'}")
-print(f" Saved: {DATA_PROCESSED / 'cleaned_data.parquet'}")
+print(f" Saved: {(DATA_PROCESSED / 'cleaned_data.csv').relative_to(PROJECT_ROOT)}")
+print(f" Saved: {(DATA_PROCESSED / 'cleaned_data.parquet').relative_to(PROJECT_ROOT)}")
 print(f"  Size: {file_size:.2f} GB")
 print(f"  Rows: {len(df_cleaned):,}")
 
@@ -1462,8 +1462,8 @@ print(f"  Rows: {len(df_for_price_prediction):,} ({len(df_for_price_prediction)/
 
 df_for_price_prediction.to_csv(DATA_PROCESSED / 'data_for_price_prediction.csv', index=False)
 df_for_price_prediction.to_parquet(DATA_PROCESSED / 'data_for_price_prediction.parquet', index=False, compression='zstd')
-print(f" Saved: {DATA_PROCESSED / 'data_for_price_prediction.csv'}")
-print(f" Saved: {DATA_PROCESSED / 'data_for_price_prediction.parquet'}")
+print(f" Saved: {(DATA_PROCESSED / 'data_for_price_prediction.csv').relative_to(PROJECT_ROOT)}")
+print(f" Saved: {(DATA_PROCESSED / 'data_for_price_prediction.parquet').relative_to(PROJECT_ROOT)}")
 
 # %%
 # Create subset for rental analysis
@@ -1476,8 +1476,8 @@ print(f"  Rows: {len(df_rentals):,} ({len(df_rentals)/len(df_cleaned)*100:.1f}% 
 
 df_rentals.to_csv(DATA_PROCESSED / 'data_rentals.csv', index=False)
 df_rentals.to_parquet(DATA_PROCESSED / 'data_rentals.parquet', index=False, compression='zstd')
-print(f" Saved: {DATA_PROCESSED / 'data_rentals.csv'}")
-print(f" Saved: {DATA_PROCESSED / 'data_rentals.parquet'}")
+print(f" Saved: {(DATA_PROCESSED / 'data_rentals.csv').relative_to(PROJECT_ROOT)}")
+print(f" Saved: {(DATA_PROCESSED / 'data_rentals.parquet').relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ---

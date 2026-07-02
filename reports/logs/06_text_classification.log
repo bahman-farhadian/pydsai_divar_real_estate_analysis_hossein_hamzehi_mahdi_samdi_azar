@@ -1,8 +1,8 @@
-command: /root/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar/.venv/bin/python /root/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar/scripts/export_html.py --input /root/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar/notebooks/06_text_classification.py --output /root/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar/reports/html/06_text_classification.html --timeout -1
+command: ./.venv/bin/python ./scripts/export_html.py --input ./notebooks/06_text_classification.py --output ./reports/html/06_text_classification.html --timeout -1
 returncode: 0
 
 [stdout]
-Exported: /root/pydsai_divar_real_estate_analysis_hossein_hamzehi_mahdi_samdi_azar/reports/html/06_text_classification.html
+Exported: ./reports/html/06_text_classification.html
 
 
 [stderr]

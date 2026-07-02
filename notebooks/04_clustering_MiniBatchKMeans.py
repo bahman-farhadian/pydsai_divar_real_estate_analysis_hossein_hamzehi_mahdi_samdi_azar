@@ -88,7 +88,7 @@ print("Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -123,15 +123,15 @@ DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Figures path: {FIGURES_PATH}")
+print("Project root: .")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 print(f"Figures path exists: {FIGURES_PATH.exists()}")
 
 # %%
 # Load the enhanced dataset from Phase 2
 DATA_FILE = DATA_PROCESSED / 'cleaned_data_with_features.csv'
 
-print(f"Loading data from: {DATA_FILE}")
+print(f"Loading data from: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 df_full = read_csv_fast(DATA_FILE)
 print(f"Full dataset: {len(df_full):,} rows")
 
@@ -1028,7 +1028,7 @@ summary_data = {
 pd.DataFrame(summary_data).to_csv(DATA_PROCESSED / 'clustering_summary_minibatch.csv', index=False)
 print(f"Saved: clustering_summary_minibatch.csv")
 
-print(f"\nAll figures saved to: {FIGURES_PATH}")
+print(f"\nAll figures saved to: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ---

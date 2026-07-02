@@ -91,7 +91,7 @@ print(" Libraries loaded successfully")
 def read_csv_fast(path, **kwargs):
     parquet_path = path.with_suffix('.parquet')
     if parquet_path.exists():
-        print(f"Loading Parquet: {parquet_path}")
+        print(f"Loading Parquet: {parquet_path.relative_to(PROJECT_ROOT)}")
         return pd.read_parquet(parquet_path)
     try:
         return pd.read_csv(path, engine='pyarrow', **kwargs)
@@ -118,15 +118,15 @@ FIGURES_PATH = REPORTS_PATH / 'figures'
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
-print(f"Project root: {PROJECT_ROOT}")
-print(f"Figures path: {FIGURES_PATH}")
+print("Project root: .")
+print(f"Figures path: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]
 # ## 3. Load Cleaned Data
 
 # %%
 DATA_FILE = DATA_PROCESSED / 'cleaned_data.csv'
-print(f"Loading: {DATA_FILE}")
+print(f"Loading: {DATA_FILE.relative_to(PROJECT_ROOT)}")
 df = read_csv_fast(DATA_FILE)
 print(f"\n Dataset: {df.shape[0]:,} rows, {df.shape[1]} columns")
 

@@ -11,6 +11,8 @@ license: odbl
 
 The `real_estate_ads` dataset contains one million anonymized real estate advertisements collected from the [Divar](https://divar.ir) platform, one of the largest classified ads platforms in the Middle East. This comprehensive dataset provides researchers, data scientists, and entrepreneurs with authentic real estate market data to build innovative solutions such as price evaluation models, market analysis tools, and forecasting systems.
 
+This project uses the public Kaggle release: [Divar 2025 Real Estate Dataset](https://www.kaggle.com/datasets/valakhorasani/divar-real-estate-dataset1m-persian-property-ads/data).
+
 
 ## 🔍 Dataset Details
 

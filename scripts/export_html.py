@@ -39,6 +39,7 @@ def export_html(input_path: Path, output_path: Path, timeout: int) -> None:
     os.environ.setdefault("PYDEVD_DISABLE_FILE_VALIDATION", "1")
 
     project_root = find_project_root(input_path)
+    output_path = output_path.resolve()
     notebook = jupytext.read(input_path)
     notebook.cells.insert(
         0,
@@ -59,7 +60,7 @@ def export_html(input_path: Path, output_path: Path, timeout: int) -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(body, encoding="utf-8")
-    print(f"Exported: {output_path}")
+    print(f"Exported: {output_path.relative_to(project_root)}")
 
 
 def main() -> None:
