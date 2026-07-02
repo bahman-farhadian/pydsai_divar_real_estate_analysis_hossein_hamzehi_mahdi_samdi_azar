@@ -147,25 +147,37 @@ python scripts/compress_data.py compress --input Divar-Real-State-Ads/sampled_da
 
 ## Pipeline Graph
 
-```text
-Divar CSV
-   |
-   v
-01_data_quality.py
-   |
-   +--> 06_text_classification.py
-   +--> 06_text_classification_TorchCUDA.py
-   |
-   v
-02_eda.py
-   |
-   +--> 02_eda_polars_duckdb.py
-   +--> 03_market_analysis.py
-   +--> 04_clustering_MiniBatchKMeans.py
-   +--> 04_clustering_TorchCUDAKMeans.py
-   +--> 05_price_prediction.py
-   +--> 05_price_prediction_TorchCUDA.py
-   +--> 04_clustering_StandardKMeans.py (validation run)
+```mermaid
+flowchart TD
+    raw["Divar CSV"] --> quality["01_data_quality.py<br/>Cleaned baseline"]
+
+    subgraph after_baseline["Parallel after cleaned baseline"]
+        eda["02_eda.py<br/>Feature dataset"]
+        eda_fast["02_eda_polars_duckdb.py<br/>Polars/DuckDB EDA"]
+        text_cpu["06_text_classification.py<br/>CPU text baseline"]
+        text_cuda["06_text_classification_TorchCUDA.py<br/>CUDA text classifier"]
+    end
+
+    quality --> eda
+    quality --> eda_fast
+    quality --> text_cpu
+    quality --> text_cuda
+
+    subgraph after_features["Parallel after feature dataset"]
+        market["03_market_analysis.py<br/>Market summaries"]
+        cluster_cpu["04_clustering_MiniBatchKMeans.py<br/>CPU clustering baseline"]
+        cluster_cuda["04_clustering_TorchCUDAKMeans.py<br/>CUDA clustering"]
+        price_cpu["05_price_prediction.py<br/>CPU price baseline"]
+        price_cuda["05_price_prediction_TorchCUDA.py<br/>CUDA price prediction"]
+        cluster_validation["04_clustering_StandardKMeans.py<br/>Validation run"]
+    end
+
+    eda --> market
+    eda --> cluster_cpu
+    eda --> cluster_cuda
+    eda --> price_cpu
+    eda --> price_cuda
+    eda --> cluster_validation
 ```
 
 `01_data_quality.py` creates the cleaned baseline. `02_eda.py` creates the feature-enhanced dataset used by market analysis, clustering, and price prediction. Text classification can run after the cleaned baseline is available.
