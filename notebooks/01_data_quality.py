@@ -121,8 +121,9 @@ def find_project_root(start=None):
 
 PROJECT_ROOT = find_project_root()
 DATA_RAW = PROJECT_ROOT / 'Divar-Real-State-Ads'
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
 
 # Create output directories if they don't exist
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)

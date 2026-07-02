@@ -116,10 +116,12 @@ def find_project_root(start=None):
 
 
 PROJECT_ROOT = find_project_root()
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
 
 # Create output directories if they don't exist
+DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
 print(f"Project root: {PROJECT_ROOT}")
@@ -1170,7 +1172,7 @@ print(f"\nAll figures saved to: {FIGURES_PATH}")
 #
 # - `market_analysis_city_summary.csv` - Price statistics by city
 # - `market_analysis_amenity_impact.csv` - Amenity price impact
-# - Figures in `notebooks/outputs/figures/03_*.png`
+# - Figures in `reports/figures/03_*.png`
 #
 # ---
 #

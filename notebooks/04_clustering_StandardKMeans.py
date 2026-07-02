@@ -113,9 +113,10 @@ def find_project_root(start=None):
 
 PROJECT_ROOT = find_project_root()
 
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
-MODELS_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'models'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
+MODELS_PATH = REPORTS_PATH / 'models'
 
 # Create directories
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
@@ -996,8 +997,8 @@ export_cols = ['city_slug', 'price_per_sqm', 'building_size', 'rooms_numeric',
                'has_elevator_binary', 'has_parking_binary', 
                'has_warehouse_binary', 'cluster', 'cluster_name']
 
-df_cluster[export_cols].to_csv(DATA_PROCESSED / 'clustering_assignments.csv', index=False)
-print(f"Saved: clustering_assignments.csv ({len(df_cluster):,} rows)")
+df_cluster[export_cols].to_csv(DATA_PROCESSED / 'clustering_assignments_standard.csv', index=False)
+print(f"Saved: clustering_assignments_standard.csv ({len(df_cluster):,} rows)")
 
 # Save cluster profiles
 cluster_profiles_export = df_cluster.groupby('cluster').agg({
@@ -1012,8 +1013,8 @@ cluster_profiles_export = df_cluster.groupby('cluster').agg({
 
 cluster_profiles_export.columns = ['_'.join(col).strip() for col in cluster_profiles_export.columns]
 cluster_profiles_export['cluster_name'] = cluster_profiles_export.index.map(cluster_names)
-cluster_profiles_export.to_csv(DATA_PROCESSED / 'cluster_profiles.csv')
-print(f"Saved: cluster_profiles.csv")
+cluster_profiles_export.to_csv(DATA_PROCESSED / 'cluster_profiles_standard.csv')
+print(f"Saved: cluster_profiles_standard.csv")
 
 # Save summary
 summary_data = {
@@ -1023,8 +1024,8 @@ summary_data = {
     'median_price_per_sqm': [df_cluster[df_cluster['cluster'] == i]['price_per_sqm'].median() for i in range(optimal_k)],
     'median_size': [df_cluster[df_cluster['cluster'] == i]['building_size'].median() for i in range(optimal_k)]
 }
-pd.DataFrame(summary_data).to_csv(DATA_PROCESSED / 'clustering_summary.csv', index=False)
-print(f"Saved: clustering_summary.csv")
+pd.DataFrame(summary_data).to_csv(DATA_PROCESSED / 'clustering_summary_standard.csv', index=False)
+print(f"Saved: clustering_summary_standard.csv")
 
 print(f"\nAll figures saved to: {FIGURES_PATH}")
 
@@ -1048,9 +1049,9 @@ print(f"\nAll figures saved to: {FIGURES_PATH}")
 #
 # ### Files Created
 #
-# - `clustering_assignments.csv` - Full data with cluster labels
-# - `cluster_profiles.csv` - Statistics per cluster
-# - `clustering_summary.csv` - Summary table
+# - `clustering_assignments_standard.csv` - Full data with cluster labels
+# - `cluster_profiles_standard.csv` - Statistics per cluster
+# - `clustering_summary_standard.csv` - Summary table
 # - Figures: `04_*.png` in figures directory
 #
 # ### Key Insights

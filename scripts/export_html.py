@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
 from pathlib import Path
 
 import jupytext
@@ -18,25 +17,6 @@ def find_project_root(start: Path) -> Path:
         if (path / "Divar-Real-State-Ads").exists() and (path / "notebooks").exists():
             return path
     raise FileNotFoundError("Could not locate project root.")
-
-
-def find_reports_root(output_path: Path) -> Path:
-    output_path = output_path.resolve()
-    if output_path.parent.name == "html":
-        return output_path.parent.parent
-    return output_path.parent
-
-
-def sync_report_artifacts(project_root: Path, reports_root: Path) -> None:
-    source_root = project_root / "notebooks" / "outputs"
-    destination_root = reports_root / "notebooks" / "outputs"
-
-    for name in ("figures", "models"):
-        source = source_root / name
-        destination = destination_root / name
-        destination.mkdir(parents=True, exist_ok=True)
-        if source.exists():
-            shutil.copytree(source, destination, dirs_exist_ok=True)
 
 
 def export_html(input_path: Path, output_path: Path, timeout: int) -> None:
@@ -54,7 +34,6 @@ def export_html(input_path: Path, output_path: Path, timeout: int) -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(body, encoding="utf-8")
-    sync_report_artifacts(project_root, find_reports_root(output_path))
     print(f"Exported: {output_path}")
 
 

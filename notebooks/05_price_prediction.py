@@ -108,11 +108,13 @@ def find_project_root(start=None):
 
 
 PROJECT_ROOT = find_project_root()
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
-MODELS_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'models'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
+MODELS_PATH = REPORTS_PATH / 'models'
 
 # Create output directories
+DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -1561,7 +1563,9 @@ predictions_df.columns = ['city', 'property_type', 'size_sqm', 'rooms',
 
 pred_path = DATA_PROCESSED / 'price_predictions.csv'
 predictions_df.to_csv(pred_path, index=False)
+predictions_df.to_parquet(DATA_PROCESSED / 'price_predictions.parquet', index=False, compression='zstd')
 print(f" Predictions saved: {pred_path} ({len(predictions_df):,} rows)")
+print(f" Predictions saved: {DATA_PROCESSED / 'price_predictions.parquet'} ({len(predictions_df):,} rows)")
 
 # 4. Save model comparison results
 results_path = DATA_PROCESSED / 'model_comparison.csv'

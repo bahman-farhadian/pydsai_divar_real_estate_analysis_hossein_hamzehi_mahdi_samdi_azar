@@ -2,9 +2,16 @@
 Divar-Real-State-Ads/divar_real_estate_ads.csv
 Divar-Real-State-Ads/sampled_data.csv
 
-# Generated pipeline outputs and model artifacts
+# Legacy generated pipeline outputs and model artifacts
 data/
 notebooks/outputs/
+
+# Generated report artifacts
+reports/data/
+reports/figures/
+reports/models/
+reports/logs/
+reports/runtime_summary.csv
 
 # Notebook artifacts are not part of the finalized repository
 *.ipynb

@@ -119,11 +119,13 @@ def find_project_root(start=None):
 
 PROJECT_ROOT = find_project_root()
 DATA_RAW = PROJECT_ROOT / 'Divar-Real-State-Ads'
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
-MODELS_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'models'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
+MODELS_PATH = REPORTS_PATH / 'models'
 
 # Create output directories
+DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -1155,7 +1157,9 @@ print("=" * 60)
 if len(df_to_predict) > 0:
     predictions_export = df_to_predict[['predicted_user_type', 'prediction_confidence']].copy()
     predictions_export.to_csv(DATA_PROCESSED / 'user_type_predictions.csv', index=True)
+    predictions_export.to_parquet(DATA_PROCESSED / 'user_type_predictions.parquet', index=True, compression='zstd')
     print(f"Saved: user_type_predictions.csv ({len(predictions_export):,} records)")
+    print(f"Saved: user_type_predictions.parquet ({len(predictions_export):,} records)")
 
 # 2. Create filled dataset (original + predicted user_type)
 df_filled = df.copy()

@@ -112,8 +112,10 @@ def find_project_root(start=None):
 
 
 PROJECT_ROOT = find_project_root()
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
-FIGURES_PATH = PROJECT_ROOT / 'notebooks' / 'outputs' / 'figures'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
+FIGURES_PATH = REPORTS_PATH / 'figures'
+DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
 print(f"Project root: {PROJECT_ROOT}")
@@ -1317,6 +1319,6 @@ print(f" Saved: cleaned_data_with_features.parquet")
 # - `eda_sell_summary.csv`
 # - `eda_city_statistics.csv`
 # - `eda_correlation_matrix.csv`
-# - All figures in `notebooks/outputs/figures/02_*.png`
+# - All figures in `reports/figures/02_*.png`
 #
 # **Next: Phase 3 - Market Analysis**

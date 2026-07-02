@@ -31,7 +31,8 @@ def find_project_root(start=None):
 
 
 PROJECT_ROOT = find_project_root()
-DATA_PROCESSED = PROJECT_ROOT / 'data' / 'processed'
+REPORTS_PATH = PROJECT_ROOT / 'reports'
+DATA_PROCESSED = REPORTS_PATH / 'data'
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
 SOURCE_PARQUET = DATA_PROCESSED / 'cleaned_data.parquet'
