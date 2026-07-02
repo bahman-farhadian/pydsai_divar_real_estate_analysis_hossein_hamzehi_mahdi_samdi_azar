@@ -55,13 +55,13 @@ Target CUDA version: `12.2`
 
 Report-generation hardware:
 
-| Component | Value |
-| --- | --- |
-| GPU | NVIDIA GeForce GTX 1080, 8GB |
-| NVIDIA driver | 535.261.03 |
-| CUDA | 12.2 |
-| CPU | 20 threads |
-| RAM | 31GB |
+| Component     | Value                        |
+| ------------- | ---------------------------- |
+| GPU           | NVIDIA GeForce GTX 1080, 8GB |
+| NVIDIA driver | 535.261.03                   |
+| CUDA          | 12.2                         |
+| CPU           | 20 vCPU, AMD Ryzen 9 3900X   |
+| RAM           | 32GB                         |
 
 Modern RAPIDS/cuML is not pinned because current RAPIDS releases require newer GPU architecture than Pascal/GTX 1080. CUDA acceleration in this project is implemented with PyTorch CUDA.
 
