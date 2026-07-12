@@ -1,8 +1,0 @@
-command: ./.venv/bin/python ./scripts/export_html.py --input ./notebooks/06_text_classification_TorchCUDA.py --output ./reports/html/06_text_classification_TorchCUDA.html --timeout -1
-returncode: 0
-
-[stdout]
-Exported: ./reports/html/06_text_classification_TorchCUDA.html
-
-
-[stderr]

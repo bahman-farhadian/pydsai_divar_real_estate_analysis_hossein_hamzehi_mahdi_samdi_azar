@@ -1,8 +1,0 @@
-command: ./.venv/bin/python ./scripts/export_html.py --input ./notebooks/03_market_analysis.py --output ./reports/html/03_market_analysis.html --timeout -1
-returncode: 0
-
-[stdout]
-Exported: ./reports/html/03_market_analysis.html
-
-
-[stderr]
