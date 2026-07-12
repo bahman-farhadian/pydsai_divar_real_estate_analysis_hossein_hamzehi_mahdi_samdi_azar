@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from report_contracts import validate_report_contracts
+
 
 @dataclass(frozen=True)
 class Stage:
@@ -309,6 +311,11 @@ def main() -> None:
         timeout=args.timeout,
     )
     write_runtime_summary(project_root, all_results)
+
+    contract_errors = validate_report_contracts(project_root, use_cuda)
+    if contract_errors:
+        raise RuntimeError("Report contract validation failed:\n- " + "\n- ".join(contract_errors))
+    print("Report contract validation: passed")
 
 
 if __name__ == "__main__":

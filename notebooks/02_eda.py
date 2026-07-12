@@ -53,6 +53,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 from scipy import stats
+from scripts.report_contracts import EDA_CITY_COLUMNS, EDA_SUMMARY_COLUMNS, write_csv, write_manifest
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -310,7 +311,7 @@ axes[1, 1].set_title('Price Density (KDE)')
 
 plt.suptitle('Sell Listing Price Distribution Analysis', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_price_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_price_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -371,7 +372,7 @@ for bar, val in zip(bars, cat_counts.values):
                  f'{int(val):,}', ha='center', va='bottom', fontsize=9, fontweight='bold', color='#333333')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_price_per_sqm_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_price_per_sqm_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -443,7 +444,7 @@ axes[2].set_xticks(range(len(cat_counts)))
 axes[2].set_xticklabels(cat_order, rotation=30, ha='right')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_building_size_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_building_size_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -527,7 +528,7 @@ if 'rooms_count' in df.columns:
                          f'{val:.1f}M', ha='center', va='bottom', fontsize=9, fontweight='bold', color='#333333')
     
     plt.tight_layout()
-    plt.savefig(FIGURES_PATH / '02_rooms_distribution.png', dpi=150, bbox_inches='tight')
+    plt.savefig(FIGURES_PATH / '02_pandas_rooms_distribution.png', dpi=150, bbox_inches='tight')
     plt.show()
 else:
     print("rooms_count column not found")
@@ -579,7 +580,7 @@ axes[1].legend(wedges, pie_data.index, title='City', loc='center left', bbox_to_
 axes[1].set_title('City Distribution (Top 5 + Others)')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_city_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_city_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -619,7 +620,7 @@ if cols:
     axes[1].legend(title='Listing Type')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_property_type_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_property_type_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -705,7 +706,7 @@ if labeled_values:
     axes[1].set_title('User Type (Excluding NULL)', fontsize=12, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_user_type_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_user_type_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -750,7 +751,7 @@ sns.heatmap(corr_matrix, mask=mask, annot=True, fmt='.2f', cmap='RdYlGn',
 ax.set_title('Correlation Matrix (Filtered Sell Listings)', fontsize=12, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_correlation_matrix.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_correlation_matrix.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("\n Using filtered data shows meaningful correlations")
@@ -838,7 +839,7 @@ axes[1, 1].grid(True, alpha=0.3, axis='y')
 
 plt.suptitle('Scatter Plot Analysis - Key Relationships', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_scatter_plots.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_scatter_plots.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("\n Key Insights:")
@@ -902,7 +903,7 @@ axes[1].set_title('Price Distribution by City (Top 10 by Volume)\n(5th-95th perc
 plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45, ha='right')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_price_by_city.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_price_by_city.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -954,7 +955,7 @@ axes[1].set_title('Price Distribution by Property Type (Top 6)')
 plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45, ha='right')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_price_by_property_type.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_price_by_property_type.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -1034,7 +1035,7 @@ if len(user_data) > 0:
                      f'{val:.1f}M', ha='center', va='bottom', fontsize=11, fontweight='bold', color='#333333')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_price_by_user_type.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_price_by_user_type.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -1118,7 +1119,7 @@ if 'year_month' in df.columns and df['year_month'].notna().sum() > 0:
 
 plt.suptitle('Temporal Analysis - Market Trends', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_temporal_analysis.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_temporal_analysis.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -1183,7 +1184,7 @@ axes[2].set_title('Top 10 Cities for Rentals')
 
 plt.suptitle('Rental Market Overview', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '02_rental_market.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '02_pandas_rental_market.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 # %% [markdown]
@@ -1233,6 +1234,28 @@ city_stats.head(10)
 # Correlation matrix
 corr_matrix.to_csv(DATA_PROCESSED / 'eda_correlation_matrix.csv')
 print(f" Saved: eda_correlation_matrix.csv")
+
+pandas_summary = pd.DataFrame(
+    [
+        ('total_records', len(df)),
+        ('clean_sell_records', len(df_sell_clean)),
+        ('median_sell_price_billion_tomans', df_sell_clean['price_value'].median() / 1e9),
+        ('median_sell_price_per_sqm_million_tomans', df_sell_clean['price_per_sqm'].median() / 1e6),
+    ],
+    columns=EDA_SUMMARY_COLUMNS,
+)
+write_csv(pandas_summary, DATA_PROCESSED / 'eda_pandas_summary.csv', EDA_SUMMARY_COLUMNS)
+write_csv(city_stats, DATA_PROCESSED / 'eda_pandas_city_statistics.csv', EDA_CITY_COLUMNS)
+corr_matrix.to_csv(DATA_PROCESSED / 'eda_pandas_correlation_matrix.csv')
+write_manifest(
+    DATA_PROCESSED / 'eda_pandas_manifest.json',
+    'pandas',
+    {
+        'summary': DATA_PROCESSED / 'eda_pandas_summary.csv',
+        'city_statistics': DATA_PROCESSED / 'eda_pandas_city_statistics.csv',
+        'correlation_matrix': DATA_PROCESSED / 'eda_pandas_correlation_matrix.csv',
+    },
+)
 
 # %% [markdown]
 # ---

@@ -42,6 +42,7 @@ import pandas as pd
 import polars as pl
 import seaborn as sns
 from IPython.display import display
+from scripts.report_contracts import EDA_CITY_COLUMNS, EDA_SUMMARY_COLUMNS, write_csv, write_manifest
 
 warnings.filterwarnings('ignore')
 
@@ -105,11 +106,12 @@ def display_user_type(value):
     return USER_TYPE_ALIASES.get(str(value), str(value))
 
 
-def save_figure(filename):
-    output_path = FIGURES_PATH / filename
+def save_figure(*filenames):
     plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"Figure saved: {output_path.relative_to(PROJECT_ROOT)}")
+    for filename in filenames:
+        output_path = FIGURES_PATH / filename
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        print(f"Figure saved: {output_path.relative_to(PROJECT_ROOT)}")
     plt.show()
 
 
@@ -224,7 +226,9 @@ if {'price_value', 'building_size'}.issubset(schema_names):
 
 if 'created_at_month' in schema_names:
     features = features.with_columns(
-        pl.col('created_at_month').cast(pl.Utf8).str.slice(0, 7).alias('year_month')
+        pl.col('created_at_month').cast(pl.Utf8).str.slice(0, 7).alias('year_month'),
+        pl.col('created_at_month').cast(pl.Utf8).str.slice(0, 4).cast(pl.Int32, strict=False).alias('year'),
+        pl.col('created_at_month').cast(pl.Utf8).str.slice(5, 2).cast(pl.Int32, strict=False).alias('month'),
     )
 
 FEATURE_PARQUET = DATA_PROCESSED / 'cleaned_data_with_features_polars.parquet'
@@ -287,7 +291,6 @@ city_stats = connection.execute(f"""
       AND price_per_sqm IS NOT NULL
       AND price_sqm_outlier = false
     GROUP BY city_slug
-    HAVING COUNT(*) >= 100
     ORDER BY listing_count DESC
 """).df()
 save_table(city_stats, 'eda_polars_duckdb_city_statistics.csv')
@@ -306,7 +309,6 @@ property_stats = connection.execute(f"""
       AND price_per_sqm IS NOT NULL
       AND price_sqm_outlier = false
     GROUP BY cat3_slug
-    HAVING COUNT(*) >= 100
     ORDER BY listing_count DESC
 """).df()
 save_table(property_stats, 'eda_polars_duckdb_property_type_statistics.csv')
@@ -360,7 +362,6 @@ rental_stats = connection.execute(f"""
       AND building_size > 0
       AND (rent_value > 0 OR credit_value > 0)
     GROUP BY city_slug
-    HAVING COUNT(*) >= 100
     ORDER BY listing_count DESC
 """).df()
 save_table(rental_stats, 'eda_polars_duckdb_rental_statistics.csv')
@@ -515,7 +516,7 @@ max_category = max(category_counts.max(), 1)
 for bar, value in zip(bars, category_counts.values):
     axes[1, 1].text(bar.get_x() + bar.get_width() / 2, value + max_category * 0.02, f'{int(value):,}', ha='center', va='bottom', fontsize=8)
 
-save_figure('02_polars_duckdb_price_distribution.png')
+save_figure('02_polars_duckdb_price_distribution.png', '02_polars_duckdb_price_per_sqm_distribution.png')
 
 # %%
 fig, axes = plt.subplots(1, 2, figsize=(15, 5))
@@ -541,7 +542,7 @@ axes[1].set_title('Building Size vs Price per sqm')
 axes[1].set_xlabel('Building Size (sqm)')
 axes[1].set_ylabel('Price per sqm (Million Tomans)')
 
-save_figure('02_polars_duckdb_building_size_distribution.png')
+save_figure('02_polars_duckdb_building_size_distribution.png', '02_polars_duckdb_scatter_plots.png')
 
 # %% [markdown]
 # ## 8. Categorical Distributions
@@ -613,6 +614,13 @@ axes[1].tick_params(axis='x', rotation=15)
 
 save_figure('02_polars_duckdb_user_type_distribution.png')
 
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.bar(user_plot['user_type_label'], user_plot['median_price_per_sqm'] / 1e6, color=COLORS['accent'], edgecolor='white')
+ax.set_title('Median Price per sqm by User Type')
+ax.set_ylabel('Million Tomans per sqm')
+ax.tick_params(axis='x', rotation=15)
+save_figure('02_polars_duckdb_price_by_user_type.png')
+
 # %% [markdown]
 # ## 9. Correlations and Segment Prices
 
@@ -673,7 +681,7 @@ axes[1].barh(price_property['property_label'][::-1], price_property['median_pric
 axes[1].set_title('Highest Median Price per sqm by Property Type')
 axes[1].set_xlabel('Million Tomans per sqm')
 
-save_figure('02_polars_duckdb_segment_prices.png')
+save_figure('02_polars_duckdb_price_by_city.png', '02_polars_duckdb_price_by_property_type.png')
 
 # %% [markdown]
 # ## 10. Temporal and Rental Market Overview
@@ -748,6 +756,25 @@ final_summary = pd.DataFrame(
     ]
 )
 save_table(final_summary, 'eda_polars_duckdb_final_summary.csv')
+write_csv(final_summary, DATA_PROCESSED / 'eda_polars_duckdb_summary.csv', EDA_SUMMARY_COLUMNS)
+polars_city_statistics = city_stats.rename(columns={
+    'listing_count': 'price_per_sqm_count',
+    'median_price_per_sqm': 'price_per_sqm_median',
+    'avg_price_per_sqm': 'price_per_sqm_mean',
+    'median_building_size': 'building_size_median',
+    'median_price': 'price_value_median',
+})
+write_csv(polars_city_statistics, DATA_PROCESSED / 'eda_polars_duckdb_city_statistics.csv', EDA_CITY_COLUMNS)
+corr_matrix.to_csv(DATA_PROCESSED / 'eda_polars_duckdb_correlation_matrix.csv')
+write_manifest(
+    DATA_PROCESSED / 'eda_polars_duckdb_manifest.json',
+    'polars_duckdb',
+    {
+        'summary': DATA_PROCESSED / 'eda_polars_duckdb_summary.csv',
+        'city_statistics': DATA_PROCESSED / 'eda_polars_duckdb_city_statistics.csv',
+        'correlation_matrix': DATA_PROCESSED / 'eda_polars_duckdb_correlation_matrix.csv',
+    },
+)
 display(final_summary)
 
 print("\nGenerated Polars/DuckDB EDA outputs:")

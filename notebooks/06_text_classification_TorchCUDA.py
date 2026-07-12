@@ -36,6 +36,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+from scripts.report_contracts import TEXT_METRIC_COLUMNS, TEXT_PREDICTION_COLUMNS, write_csv, write_manifest
 
 sns.set_style('whitegrid')
 plt.rcParams['figure.figsize'] = (12, 6)
@@ -355,6 +356,24 @@ plt.savefig(FIGURES_PATH / '06_torch_cuda_training_summary.png', dpi=150, bbox_i
 plt.show()
 
 # %%
+for task_name, history, color in [
+    ('cat3_slug', cat_history, '#3498db'),
+    ('user_type', user_history, '#2ecc71'),
+]:
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.plot(history['epoch'], history['macro_f1'], label='Macro F1', color=color)
+    ax.plot(history['epoch'], history['accuracy'], label='Accuracy', color='#e74c3c')
+    ax.set_ylim(0, 1)
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Score')
+    ax.set_title(f'{task_name} CUDA Training Metrics')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(FIGURES_PATH / f'06_torch_cuda_{task_name.replace("cat3_slug", "cat3")}_model_comparison.png', dpi=150, bbox_inches='tight')
+    plt.show()
+
+# %%
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 for ax, y_true, y_pred, encoder, title in [
     (axes[0], cat_true, cat_pred, cat_encoder, 'cat3_slug Confusion Matrix'),
@@ -380,6 +399,47 @@ plt.tight_layout()
 plt.savefig(FIGURES_PATH / '06_torch_cuda_confusion_matrices.png', dpi=150, bbox_inches='tight')
 plt.show()
 
+# %%
+for task_name, y_true, y_pred, encoder in [
+    ('cat3', cat_true, cat_pred, cat_encoder),
+    ('user_type', user_true, user_pred, user_encoder),
+]:
+    matrix = confusion_matrix(y_true, y_pred, labels=np.arange(len(encoder.classes_)))
+    indices = np.argsort(matrix.sum(axis=1))[-12:] if matrix.shape[0] > 12 else np.arange(len(encoder.classes_))
+    matrix = matrix[np.ix_(indices, indices)]
+    labels = display_class_labels(encoder.classes_[indices])
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(matrix, ax=ax, cmap='Blues', cbar=False)
+    ax.set_title(f'{task_name} Confusion Matrix')
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    ax.set_xticks(np.arange(len(labels)) + 0.5)
+    ax.set_xticklabels(labels, rotation=90, fontsize=7)
+    ax.set_yticks(np.arange(len(labels)) + 0.5)
+    ax.set_yticklabels(labels, rotation=0, fontsize=7)
+    plt.tight_layout()
+    plt.savefig(FIGURES_PATH / f'06_torch_cuda_{task_name}_confusion_matrix.png', dpi=150, bbox_inches='tight')
+    plt.show()
+
+# %%
+cat_distribution = cat_df['cat3_slug'].value_counts().head(15).sort_values()
+fig, ax = plt.subplots(figsize=(10, 7))
+ax.barh(display_class_labels(cat_distribution.index), cat_distribution.values, color='#3498db')
+ax.set_title('Property Type Distribution')
+ax.set_xlabel('Number of Listings')
+plt.tight_layout()
+plt.savefig(FIGURES_PATH / '06_torch_cuda_cat3_distribution.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+user_distribution = user_df['user_type'].value_counts().sort_values()
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.barh(display_class_labels(user_distribution.index), user_distribution.values, color='#2ecc71')
+ax.set_title('User Type Distribution')
+ax.set_xlabel('Number of Listings')
+plt.tight_layout()
+plt.savefig(FIGURES_PATH / '06_torch_cuda_user_type_distribution.png', dpi=150, bbox_inches='tight')
+plt.show()
+
 # %% [markdown]
 # ## 6. Predict Missing User Type Labels
 
@@ -397,17 +457,35 @@ else:
 
 print(f"Missing user_type rows predicted: {len(user_predictions):,}")
 
+fig, ax = plt.subplots(figsize=(9, 5))
+if user_predictions.empty:
+    ax.text(0.5, 0.5, 'No missing user-type labels', ha='center', va='center')
+    ax.set_axis_off()
+else:
+    for label, group in user_predictions.groupby('predicted_user_type'):
+        ax.hist(group['prediction_confidence'], bins=40, alpha=0.65, label=display_class_label(label))
+    ax.legend()
+    ax.set_xlabel('Prediction Confidence')
+    ax.set_ylabel('Number of Listings')
+    ax.set_title('User Type Prediction Confidence')
+plt.tight_layout()
+plt.savefig(FIGURES_PATH / '06_torch_cuda_user_type_prediction_confidence.png', dpi=150, bbox_inches='tight')
+plt.show()
+
 # %% [markdown]
 # ## 7. Export Results
 
 # %%
 metrics_df = pd.DataFrame([cat_metrics, user_metrics])
 metrics_df.to_csv(DATA_PROCESSED / 'text_classification_torch_cuda_metrics.csv', index=False)
+torch_cuda_metrics = metrics_df.assign(implementation='torch_cuda', model_name='EmbeddingBagClassifier').rename(columns={'rows_train': 'train_rows', 'rows_test': 'test_rows'})
+write_csv(torch_cuda_metrics, DATA_PROCESSED / 'text_classification_torch_cuda_metrics.csv', TEXT_METRIC_COLUMNS)
 
 cat_history.to_csv(DATA_PROCESSED / 'text_classification_torch_cuda_cat3_history.csv', index=False)
 user_history.to_csv(DATA_PROCESSED / 'text_classification_torch_cuda_user_type_history.csv', index=False)
 
 user_predictions.to_csv(DATA_PROCESSED / 'user_type_predictions_torch_cuda.csv', index=False)
+write_csv(user_predictions, DATA_PROCESSED / 'user_type_predictions_torch_cuda.csv', TEXT_PREDICTION_COLUMNS)
 user_predictions.to_parquet(DATA_PROCESSED / 'user_type_predictions_torch_cuda.parquet', index=False, compression='zstd')
 
 cat_report = classification_report(
@@ -465,6 +543,15 @@ metadata = {
 )
 
 print(f"Saved metrics: {(DATA_PROCESSED / 'text_classification_torch_cuda_metrics.csv').relative_to(PROJECT_ROOT)}")
+write_manifest(
+    DATA_PROCESSED / 'text_classification_torch_cuda_manifest.json',
+    'torch_cuda',
+    {
+        'metrics': DATA_PROCESSED / 'text_classification_torch_cuda_metrics.csv',
+        'user_predictions': DATA_PROCESSED / 'user_type_predictions_torch_cuda.csv',
+    },
+)
+
 print(f"Saved model: {(MODELS_PATH / 'text_classification_torch_cuda.pt').relative_to(PROJECT_ROOT)}")
 
 # %% [markdown]

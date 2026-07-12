@@ -55,6 +55,8 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 # Evaluation
+from scripts.report_contracts import TEXT_METRIC_COLUMNS, TEXT_PREDICTION_COLUMNS, write_csv, write_manifest
+
 from sklearn.metrics import (
     accuracy_score, f1_score, precision_score, recall_score,
     classification_report, confusion_matrix, ConfusionMatrixDisplay
@@ -404,7 +406,7 @@ for autotext in autotexts:
 axes[1].set_title('Property Type Distribution')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_cat3_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_cat3_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("Figure saved: 06_cat3_distribution.png")
@@ -563,7 +565,7 @@ for i, metric in enumerate(metrics):
 
 plt.suptitle('Part A: Property Type Classification - Model Comparison', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_cat3_model_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_cat3_model_comparison.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 best_idx = results_df_cat3['F1 (Weighted)'].idxmax()
@@ -602,7 +604,7 @@ plt.xticks(rotation=45, ha='right')
 plt.yticks(rotation=0)
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_cat3_confusion_matrix.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_cat3_confusion_matrix.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("Figure saved: 06_cat3_confusion_matrix.png")
@@ -753,7 +755,7 @@ for bar, val in zip(bars2, bar_data):
                  f'{val:,}\n({pct:.1f}%)', va='center', ha='left', fontsize=10, fontweight='bold', color='#333333')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_user_type_distribution.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_user_type_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print(f"\nClass imbalance: {user_type_counts.max() / user_type_counts.min():.1f}x ratio")
@@ -905,7 +907,7 @@ for i, metric in enumerate(metrics):
 
 plt.suptitle('Part B: User Type Classification - Model Comparison', fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_user_type_model_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_user_type_model_comparison.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 best_idx = results_df_user['F1 (Weighted)'].idxmax()
@@ -937,7 +939,7 @@ disp.plot(ax=ax, cmap='Blues', values_format='d')
 ax.set_title(f'Confusion Matrix - {best_model_user_name}', fontsize=12, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_user_type_confusion_matrix.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_user_type_confusion_matrix.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("Figure saved: 06_user_type_confusion_matrix.png")
@@ -1072,7 +1074,7 @@ if len(df_to_predict) > 0:
     axes[1].set_title('Prediction Confidence Categories')
 
 plt.tight_layout()
-plt.savefig(FIGURES_PATH / '06_user_type_prediction_confidence.png', dpi=150, bbox_inches='tight')
+plt.savefig(FIGURES_PATH / '06_cpu_user_type_prediction_confidence.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 print("Figure saved: 06_user_type_prediction_confidence.png")
@@ -1181,6 +1183,39 @@ summary = {
 
 pd.DataFrame([summary]).to_csv(DATA_PROCESSED / 'classification_summary.csv', index=False)
 print(f"Saved: classification_summary.csv")
+
+cpu_metrics = pd.concat(
+    [
+        results_df_cat3.assign(task='cat3_slug', implementation='cpu', train_rows=len(X_train), test_rows=len(X_test)),
+        results_df_user.assign(task='user_type', implementation='cpu', train_rows=len(X_train_user), test_rows=len(X_test_user)),
+    ],
+    ignore_index=True,
+).rename(columns={
+    'Model': 'model_name',
+    'Accuracy': 'accuracy',
+    'F1 (Weighted)': 'weighted_f1',
+    'F1 (Macro)': 'macro_f1',
+})
+write_csv(cpu_metrics, DATA_PROCESSED / 'text_classification_cpu_metrics.csv', TEXT_METRIC_COLUMNS)
+
+if len(df_to_predict) > 0:
+    cpu_predictions = pd.DataFrame({
+        'row_index': df_to_predict.index,
+        'predicted_user_type': df_to_predict['predicted_user_type'].to_numpy(),
+        'prediction_confidence': df_to_predict['prediction_confidence'].to_numpy(),
+    })
+else:
+    cpu_predictions = pd.DataFrame(columns=TEXT_PREDICTION_COLUMNS)
+write_csv(cpu_predictions, DATA_PROCESSED / 'user_type_predictions_cpu.csv', TEXT_PREDICTION_COLUMNS)
+cpu_predictions.to_parquet(DATA_PROCESSED / 'user_type_predictions_cpu.parquet', index=False, compression='zstd')
+write_manifest(
+    DATA_PROCESSED / 'text_classification_cpu_manifest.json',
+    'cpu',
+    {
+        'metrics': DATA_PROCESSED / 'text_classification_cpu_metrics.csv',
+        'user_predictions': DATA_PROCESSED / 'user_type_predictions_cpu.csv',
+    },
+)
 
 print(f"\nAll figures saved to: {FIGURES_PATH.relative_to(PROJECT_ROOT)}")
 
